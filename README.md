@@ -1,18 +1,22 @@
 # allalin
 
-Clojurescript + Rum
+Presentation framework built with Clojurescript, Rum and Figwheel
 
 ## Overview
+
+Needs a recent browser (supporting the fetch API)
 
 ## Roadmap
 
 ### Global
-- [ ] Load edn conf and data file
+- [x] Load edn conf and data file
+- [ ] Error management
 - [ ] Page display
 - [ ] Controls
-- [ ] Usable as framework
+- [ ] Usable as a framework
 
 ### Conf
+- [ ] Header
 - [ ] Footer
 - [ ] Icon and title
 
