@@ -1,1 +1,7 @@
-{:test "Test !" :foo "Bar"}
+{:global {:screen-ratio 0.625
+          :background {:color "#000"}}
+ :left {:background-color "blue"
+        :color "white"
+        :width 10
+        :content []}
+ :pages [{:title "Allalin presentation framework"}]}

@@ -4,25 +4,29 @@ Presentation framework built with Clojurescript, Rum and Figwheel
 
 ## Overview
 
-Needs a recent browser (supporting the fetch API)
+Needs a recent browser (supporting the fetch API and flexbox)
 
 ## Roadmap
 
 ### Global
 - [x] Load edn conf and data file
-- [ ] Error management
+- [x] Error management
 - [ ] Page display
-- [ ] Controls
-- [ ] Usable as a framework
+- [x] Controls
+- [x] Configuration reload
+- [ ] Templates
+- [ ] Configuration live edition
 
 ### Conf
-- [ ] Header
-- [ ] Footer
-- [ ] Icon and title
+- [x] Header
+- [x] Footer
+- [x] Aside
+- [x] Icon and title
 
 ### Content
 - [ ] Title
 - [ ] Image
+- [ ] Image background
 - [ ] Text
 - [ ] Code
 - [ ] Fragments
@@ -44,11 +48,7 @@ To get an interactive development environment run:
 and open your browser at [localhost:3449](http://localhost:3449/).
 This will auto compile and send all changes to the browser without the
 need to reload. After the compilation process is complete, you will
-get a Browser Connected REPL. An easy way to try it is:
-
-    (js/alert "Am I connected?")
-
-and you should see an alert in the browser window.
+get a Browser Connected REPL.
 
 To clean all compiled files:
 
