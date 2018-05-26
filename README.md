@@ -11,7 +11,7 @@ Needs a recent browser (supporting the fetch API and flexbox)
 ### Global
 - [x] Load edn conf and data file
 - [x] Error management
-- [ ] Page display
+- [X] Page display
 - [x] Controls
 - [x] Configuration reload
 - [ ] Templates
@@ -22,20 +22,21 @@ Needs a recent browser (supporting the fetch API and flexbox)
 - [x] Footer
 - [x] Aside
 - [x] Icon and title
+- [x] Background Image
 
 ### Content
-- [ ] Title
-- [ ] Image
-- [ ] Image background
+- [x] Titles
+- [x] Image
 - [ ] Text
 - [ ] Code
 - [ ] Fragments
 - [ ] Steps
 - [ ] Table
+- [ ] Page number
 
 ### Style
-- [ ] Responsive CSS
-- [ ] Transition
+- [x] Responsive CSS
+- [x] Transition
 - [ ] Default style
 - [ ] Custom style
 

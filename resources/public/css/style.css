@@ -63,6 +63,10 @@ header, footer, aside {
     height: 100%;
 }
 
+.bg-ease {
+    transition: background .2s ease-in-out;
+}
+
 .root {
     display: flex;
     flex-direction: column;
@@ -140,11 +144,34 @@ aside.right {
 main {
     flex-grow: 0;
     flex-basis: 90%;
-    display: flex;
+    position: relative;
 }
 
-@media (min-width: 160vh) {
-    main {
-        flex-basis: calc(90vh * 8 / 5);
-    }
+h1, h2, h3, h4 {
+    top: 5%;
+    left: 5%;
+    width: 90%;
+    hyphens: auto;
+    overflow-wrap: break-word;
+    position: absolute;
+    text-transform: uppercase;
+
+}
+
+h1 {
+ font-size: 8%;
+}
+
+h2 {
+  font-size: 6%;
+}
+
+h3, h4, h5 {
+  font-size: 5%;
+}
+
+img {
+    position: absolute;
+    top: 5%;
+    left: 5%;
 }

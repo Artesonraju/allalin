@@ -6,9 +6,12 @@
 
 ; default values
 
-(def default-config {:global {:screen-ratio 0.625
-                              :background {:color "#fff"}
-                              :title "Allalin - Presentation framework"}
+(def default-config {:screen-ratio 0.625
+                     :background-color "#fff"
+                     :background-position "center"
+                     :contents #{:title :image}
+                     :title "Allalin - Presentation framework"
+                     :default {:title {:text-align "center"}}
                      :header {:background-color "inherit"
                               :color "inherit"
                               :height 0
@@ -25,14 +28,31 @@
                              :color "inherit"
                              :width 0
                              :content []}
+                     :content {:title {:level 2}}
+                     :image {:width "auto"
+                             :height "auto"}
                      :pages [{:title "Allalin - Presentation Framework"}]})
 
 
 ; utils
 
-(defn or-default
+(defn or-config
   ([config keys] (get-in config keys (get-in default-config keys)))
-  ([page config keys] (get-in page keys (or-default config keys))))
+  ([page config keys] (get-in page keys (or-config config keys))))
+
+(defn or-default
+  [content config element key]
+  (get content key (or-config config [:default element key])))
+
+(defn or-defaults
+  [content config element keys]
+  (reduce (fn [acc key]
+            (let [val (or-default content config element key)]
+              (if (some? val)
+                (assoc acc key val)
+                acc)))
+          {}
+          keys))
 
 (defn calc-vh [size ratio]
   (str "calc(" size "vh / " ratio ")"))
@@ -52,14 +72,27 @@
   (cond-> config
     (= 0 (count (:pages config))) (assoc :pages (:pages default-config))))
 
+(defn preload-images
+  [config]
+  (let [fn-images (fn [x] (list (get x :background-image)
+                                (get-in x [:header :background-image])
+                                (get-in x [:left :background-image])
+                                (get-in x [:footer :background-image])
+                                (get-in x [:right :background-image])))]
+    (->> (conj (:pages config) config)
+         (mapcat fn-images)
+         (filter some?)
+         (map #(set! (.-src (js/Image.)) (str "./images/" %)))
+         (doall))))
 
 (defn init-config [config]
-  (set! (. js/document -title) (or-default config [:global :title]))
+  (set! (. js/document -title) (or-config config [:title]))
   (swap! app-state
     (fn [state]
       (let [current (:current state)
             config (config-default-pages config)
             pages (:pages config)]
+        (preload-images config)
         (-> state
             (dissoc :error)
             (assoc :config config
@@ -96,16 +129,17 @@
 
 (defn next-page []
   (swap! app-state (fn [state]
-                     (let [pages (or-default (:config state) [:pages])
+                     (let [pages (or-config (:config state) [:pages])
                            last (- (count pages) 1)]
                        (update state :current #(min last (+ % 1)))))))
 
 (defn last-page []
   (swap! app-state (fn [state]
-                     (let [pages (or-default (:config state) [:pages])]
+                     (let [pages (or-config (:config state) [:pages])]
                        (assoc state :current (- (count pages) 1))))))
 
-(defn key-handler [key-event]
+(defn key-handler
+  [key-event]
   (condp contains? (.-key key-event)
     #{"r" "R"} (load-conf)
     #{"f" "F"} (first-page)
@@ -118,18 +152,53 @@
 
 (defonce _ (load-conf))
 
-
 ; components
+
+(rum/defc title < rum/static
+  [content config]
+  (let [level (or (:level content) (or-config config [:default :title :level]))
+        tag (keyword (str "h" level))]
+    [tag {:style (or-defaults content config :title [:color :font-size :text-align :top :left :width])}
+     (:title content)]))
+
+(rum/defc image < rum/static
+  [content config]
+  (let [src (str "./images/" (:image content))]
+    [:img {:src src
+           :style (or-defaults content config :image [:top :left :width :height])}]))
+
+; parts
+
+(rum/defc main < rum/static
+  [page config]
+  (let [width (- 100
+                 (or-config page config [:left :width])
+                 (or-config page config [:right :width]))
+        ratio (or-config config [:screen-ratio])
+        allowed (or-config config [:contents])
+        contents (filter (fn [content]
+                           (some #(contains? content %) allowed))
+                         (:contents page))]
+    [:main {:style {:flex-basis (calc-vh width ratio)}}
+     (map-indexed
+       (fn [index content]
+         (rum/with-key
+           (condp #(contains? %2 %1) content
+             :title (title content config)
+             :image (image content config))
+           (str index)))
+       contents)]))
 
 (rum/defc header < rum/static
   [page config]
-  (let [height (or-default page config [:header :height])
-        ratio (or-default config [:global :screen-ratio])
+  (let [height (or-config page config [:header :height])
+        ratio (or-config config [:screen-ratio])
         base-height (calc-vw height ratio)
         base-width (calc-vh 100 ratio)]
-    [:div.header-wrapper {:style {:background-color (or-default page config [:header :background-color])
-                                  :color (or-default page config [:header :color])
-                                  :flex-basis base-height}};}}
+    [:div.header-wrapper.bg-ease {:style {:background-color (or-config page config [:header :background-color])
+                                          :background-image (or-config page config [:header :background-image])
+                                          :color (or-config page config [:header :color])
+                                          :flex-basis base-height}}
      [:header]
      [:style
       (str "header {height: " base-height "; }
@@ -137,13 +206,14 @@
 
 (rum/defc footer < rum/static
   [page config]
-  (let [height (or-default page config [:footer :height])
-        ratio (or-default config [:global :screen-ratio])
+  (let [height (or-config page config [:footer :height])
+        ratio (or-config config [:screen-ratio])
         base-height (calc-vw height ratio)
         base-width (calc-vh 100 ratio)]
-    [:div.footer-wrapper {:style {:background-color (or-default page config [:footer :background-color])
-                                  :color (or-default page config [:footer :color])
-                                  :flex-basis base-height}};}}
+    [:div.footer-wrapper.bg-ease {:style {:background-color (or-config page config [:footer :background-color])
+                                          :background-image (or-config page config [:footer :background-image])
+                                          :color (or-config page config [:footer :color])
+                                          :flex-basis base-height}};}}
      [:footer]
      [:style
       (str "footer {height: " base-height "; }
@@ -151,12 +221,13 @@
 
 (rum/defc left < rum/static
   [page config]
-  (let [width (or-default page config [:left :width])
-        ratio (or-default config [:global :screen-ratio])
+  (let [width (or-config page config [:left :width])
+        ratio (or-config config [:screen-ratio])
         base-width (calc-vh width ratio)]
-    [:div.aside-wrapper {:style {:background-color (or-default page config [:left :background-color])
-                                 :color (or-default page config [:left :color])
-                                 :flex-basis base-width}};}}
+    [:div.aside-wrapper.bg-ease {:style {:background-color (or-config page config [:left :background-color])
+                                         :background-image (or-config page config [:left :background-image])
+                                         :color (or-config page config [:left :color])
+                                         :flex-basis base-width}}
      [:aside.left]
      [:style
       (str "aside.left {width: 100%; }
@@ -164,31 +235,24 @@
 
 (rum/defc right < rum/static
   [page config]
-  (let [width (or-default page config [:right :width])
-        ratio (or-default config [:global :screen-ratio])
+  (let [width (or-config page config [:right :width])
+        ratio (or-config config [:screen-ratio])
         base-width (calc-vh width ratio)]
-    [:div.aside-wrapper {:style {:background-color (or-default page config [:right :background-color])
-                                 :color (or-default page config [:right :color])
-                                 :flex-basis base-width}};}}
+    [:div.aside-wrapper.bg-ease {:style {:background-color (or-config page config [:right :background-color])
+                                         :background-image (or-config page config [:right :background-image])
+                                         :color (or-config page config [:right :color])
+                                         :flex-basis base-width}};}}
      [:aside.right]
      [:style
       (str "aside.right {width: 100%; }
 @media (min-width: " (/ 100 ratio)  "vh) { aside.right {width: " base-width "; }}")]]))
 
-(rum/defc main < rum/static
-  [page config]
-  (let [width (- 100
-                  (or-default page config [:left :width])
-                  (or-default page config [:right :width]))
-        ratio (or-default config [:global :screen-ratio])]
-    [:main {:style {:flex-basis (calc-vh width ratio)}}]))
-
 (rum/defc middle < rum/static
   [page config]
   (let [height (- 100
-                  (or-default page config [:header :height])
-                  (or-default page config [:footer :height]))
-        ratio (or-default config [:global :screen-ratio])]
+                  (or-config page config [:header :height])
+                  (or-config page config [:footer :height]))
+        ratio (or-config config [:screen-ratio])]
     [:div.middle {:style {:flex-basis (calc-vw height ratio)}}
      (left page config)
      (main page config)
@@ -233,10 +297,19 @@
     key-listener-mixin
   []
   (let [{:keys [state config current error]} (rum/react app-state)
-        page (nth (or-default config [:pages]) current)
-        ratio (or-default config [:global :screen-ratio])
-        base-width (calc-vh 100 ratio)]
-    [:div.fill
+        page (if (= :loaded state)
+               (nth (or-config config [:pages]) current)
+               0)
+        ratio (or-config config [:screen-ratio])
+        base-width (calc-vh 100 ratio)
+        bg-color (or-config page config [:background-color])
+        bg-image (or-config page config [:background-image])
+        bg-position (or-config page config [:background-position])]
+    [:div.fill.bg-ease {:style (cond-> {}
+                                (some? bg-color) (assoc :background-color bg-color)
+                                (some? bg-image) (assoc :background-image (str "url(./images/" bg-image ")")
+                                                        :background-size "cover"
+                                                        :background-position bg-position))}
      (case state
        :loading (loading)
        :error (err error)
@@ -244,7 +317,6 @@
      [:style
       (str "#app {font-size: 100vw; }
 @media (min-width: " (/ 100 ratio)  "vh) { #app {font-size: " base-width "; }}")]]))
-
 
 
 (rum/mount (app) (. js/document (getElementById "app")))
