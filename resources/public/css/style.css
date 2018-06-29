@@ -47,10 +47,66 @@ table {
 	border-spacing: 0;
 }
 
+/* css reset end */
+
+@font-face {
+    font-family: "Merriweather Sans";
+    src: local("Merriweather Sans"),
+         url("fonts/Merriweather_Sans/MerriweatherSans-Regular.ttf") format("opentype");
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Merriweather Sans";
+    src: local("Merriweather Sans Italic"),
+         local("Merriweather Sans-Italic"),
+         url("fonts/Merriweather_Sans/MerriweatherSans-Italic.ttf") format("opentype");
+    font-style: italic;
+    font-weight: 400;
+}
+
+@font-face {
+    font-family: "Merriweather Sans";
+    src: local("Merriweather Sans Bold"),
+         local("Merriweather Sans-Bold"),
+         url("fonts/Merriweather_Sans/MerriweatherSans-Bold.ttf") format("opentype");
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: "Merriweather Sans";
+    src: local("Merriweather Sans Bold Italic"),
+         local("Merriweather Sans-BoldItalic"),
+         url("fonts/Merriweather_Sans/MerriweatherSans-BoldItalic.ttf") format("opentype");
+    font-style: italic;
+    font-weight: 700;
+}
+
+@font-face {
+    font-family: "Merriweather Sans";
+    src: local("Merriweather Sans Extra Bold"),
+         local("Merriweather Sans-ExtraBold"),
+         url("fonts/Merriweather_Sans/MerriweatherSans-ExtraBold.ttf") format("opentype");
+    font-weight: 800;
+}
+
+@font-face {
+    font-family: "Merriweather Sans";
+    src: local("Merriweather Sans Extra Bold Italic"),
+         local("Merriweather Sans-ExtraBoldItalic"),
+         url("fonts/Merriweather_Sans/MerriweatherSans-ExtraBoldItalic.ttf") format("opentype");
+    font-style: italic;
+    font-weight: 800;
+}
+
 html, body {
     width: 100%;
     height: 100%;
     overflow: hidden;
+}
+
+body {
+    font-family : "Merriweather Sans";
 }
 
 header, footer, aside {
@@ -61,6 +117,10 @@ header, footer, aside {
 #app, .fill {
     width: 100%;
     height: 100%;
+}
+
+#app {
+    font-size: 100vw;
 }
 
 .bg-ease {
@@ -109,6 +169,7 @@ header, footer, aside {
 header {
     width: 100%;
     margin: auto auto 0 auto;
+    position: relative;
 }
 
 .footer-wrapper {
@@ -118,6 +179,7 @@ header {
 footer {
     width: 100%;
     margin: 0 auto auto auto;
+    position: relative;
 }
 
 .middle {
@@ -130,7 +192,9 @@ footer {
 }
 
 aside {
+    width: 100%;
     height: 100%;
+    position: relative;
 }
 
 aside.left {
@@ -155,23 +219,84 @@ h1, h2, h3, h4 {
     overflow-wrap: break-word;
     position: absolute;
     text-transform: uppercase;
+    text-align: center;
 
 }
 
 h1 {
+ font-weight: 800;
  font-size: 8%;
 }
 
 h2 {
+  font-weight: 700;
   font-size: 6%;
 }
 
 h3, h4, h5 {
+  font-weight: 700;
+  font-size: 5%;
+}
+
+h4, h5 {
   font-size: 5%;
 }
 
 img {
+  position: absolute;
+  top: 5%;
+  left: 5%;
+}
+
+.rum {
+  position: absolute;
+  font-size: 4%;
+  top: 5%;
+  left: 5%;
+}
+
+i {
+    font-style: italic;
+}
+
+b {
+    font-weight: bold;
+}
+
+u {
+    text-decoration: underline;
+}
+
+s {
+    text-decoration: line-through;
+}
+
+em {
+    text-transform: uppercase;
+}
+
+pre {
+  position: absolute;
+  font-size: 3%;
+  top: 5%;
+  left: 5%;
+  font-family: monospace;
+  background-color: #363636;
+  color: white;
+  padding: 1%;
+}
+
+.page-number {
+  position: absolute;
+  font-size: 2%;
+  bottom: 1%;
+  right: 1%;
+}
+
+.section {
     position: absolute;
     top: 5%;
     left: 5%;
+    border: 1% solid black;
+    overflow: hidden;
 }

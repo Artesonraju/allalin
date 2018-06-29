@@ -14,7 +14,6 @@ Needs a recent browser (supporting the fetch API and flexbox)
 - [X] Page display
 - [x] Controls
 - [x] Configuration reload
-- [ ] Templates
 - [ ] Configuration live edition
 
 ### Conf
@@ -27,12 +26,14 @@ Needs a recent browser (supporting the fetch API and flexbox)
 ### Content
 - [x] Titles
 - [x] Image
-- [ ] Text
-- [ ] Code
-- [ ] Fragments
-- [ ] Steps
+- [x] Styled Text
+- [x] Code
+- [x] Fragments
+- [x] Steps
+- [x] Page number
+- [x] Section
 - [ ] Table
-- [ ] Page number
+- [ ] Lists
 
 ### Style
 - [x] Responsive CSS
