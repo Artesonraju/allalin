@@ -1,13 +1,16 @@
 (ns allalin.core
   (:require [rum.core :as rum]
-            [cljs.reader :refer [read-string]]))
+            [clojure.string :as string]
+            [cljs.reader :refer [read-string]]
+            [cljs.spec.alpha :as s]))
 
 (enable-console-print!)
 
 ; default values
 
 (def default-config {:screen-ratio 0.625
-                     :background-color "#fff"
+                     :color "#111"
+                     :background-color "#eee"
                      :background-position "center"
                      :title "Allalin - Presentation framework"
                      :default {:title {:level 2}}
@@ -26,8 +29,15 @@
                      :right {:background-color "inherit"
                              :color "inherit"
                              :width 0
-                             :content []}
-                     :pages [{:title "Allalin - Presentation Framework"}]})
+                             :content []}})
+
+; constants
+(def available-page-number-types #{:partial :total})
+(def available-string-transforms #{:italic :bold :underlined :line-through :uppercase})
+(def available-list-types #{:numbered :bullet})
+(def simple-components #{:title :image :text :code :page-number})
+(def complex-components #{:section :list :fragments :steps})
+(def all-components (into simple-components complex-components))
 
 ; helpers
 
@@ -47,6 +57,9 @@
 
 ; utils
 
+(defn component-type [content]
+  (some all-components (keys content)))
+
 (defn or-config
   ([config keys] (get-in config keys (get-in default-config keys)))
   ([page config keys] (get-in page keys (or-config config keys))))
@@ -58,11 +71,111 @@
     (get-in config [:default element])
     content))
 
-(def simple-components #{:title :image :text :code :page-number})
+; config spec
 
-(def complex-components #{:fragments :steps :section})
+(defmulti content-spec component-type)
 
-(def changing-components #{:fragments :steps})
+(s/def ::title string?)
+(s/def ::level (s/and pos-int? #(<= % 5)))
+(defmethod content-spec :title [_]
+  (s/keys :req-un [::title] :opt-un [::level]))
+
+(s/def ::image string?)
+(defmethod content-spec :image [_]
+  (s/keys :req-un [::image]))
+
+(s/def :string/string string?)
+(s/def :string/transform (s/+ available-string-transforms))
+(s/def :string/string (s/or :string string?
+                            :number number?))
+(s/def ::string (s/keys :req-un [:string/string]
+                        :opt-un [:string/transform
+                                 :string/link]))
+
+(s/def :text/text (s/or :string string?
+                        :strings ::string))
+(s/def ::text (s/or :string :text/text
+                    :strings (s/coll-of :text/text)))
+
+(defmethod content-spec :text [_]
+  (s/keys :req-un [::text]))
+
+(s/def ::code ::text)
+(defmethod content-spec :code [_]
+  (s/keys :req-un [::code]))
+
+(s/def ::page-number available-page-number-types)
+(defmethod content-spec :page-number [_]
+  (s/keys :req-un [::page-number]))
+
+
+(s/def ::list available-list-types)
+(s/def :list/fragmented boolean?)
+(s/def :list/contents (s/coll-of ::text))
+(defmethod content-spec :list [_]
+  (s/keys :req-un [::list :list/fragmented :list/contents]))
+
+(s/def ::section (s/coll-of ::content))
+(defmethod content-spec :section [_]
+  (s/keys :req-un [::section]))
+
+(s/def ::fragments (s/coll-of ::content :min-count 2))
+(defmethod content-spec :fragments [_]
+  (s/keys :req-un [::fragments]))
+
+(s/def ::steps (s/coll-of ::content :min-count 2))
+(defmethod content-spec :steps [_]
+  (s/keys :req-un [::steps]))
+
+(s/def ::content
+  (s/multi-spec content-spec :event/type))
+
+(s/def ::contents (s/coll-of ::content))
+
+(s/def ::color string?)
+(s/def ::width pos-int?)
+(s/def ::height pos-int?)
+(s/def ::background-color string?)
+(s/def ::background-position string?)
+(s/def ::background-image string?)
+
+(s/def ::around (s/keys :opt-un [::contents
+                                 ::color
+                                 ::width
+                                 ::height
+                                 ::background-color
+                                 ::background-position
+                                 ::background-image]))
+
+(s/def :config/header ::around)
+(s/def :config/footer ::around)
+(s/def :config/left ::around)
+(s/def :config/right ::around)
+
+(s/def ::page (s/keys :opt-un [::contents
+                               ::color
+                               ::background-color
+                               ::background-position
+                               ::background-image]))
+(s/def :config/pages (s/coll-of ::page))
+
+(s/def :config/title string?)
+(s/def :config/screen-ratio (s/and number? #(> % 0) #(<= % 1)))
+(s/def :config/default (s/every-kv all-components map?))
+
+(s/def ::config
+  (s/keys :req-un [:config/pages]
+          :opt-un [:config/screen-ratio
+                   ::background-color
+                   ::background-position
+                   ::background-image
+                   :config/title
+                   :config/default
+                   :config/header
+                   :config/footer
+                   :config/left
+                   :config/right
+                   :config/pages]))
 
 ; state
 
@@ -77,13 +190,15 @@
 
 (defn is-changing-component
   [content]
-  (some #(contains? content %) changing-components))
+  (or (some #(contains? content %) #{:fragments :steps})
+      (and (contains? content :list) (contains? content :fragmented))))
 
 (defn content-children
   [content]
   (or (:fragments content)
       (:steps content)
-      (:section content)))
+      (:section content)
+      (:contents content))) ; for list fragment
 
 (defn build-parts
   [contents]
@@ -182,10 +297,6 @@
 
 ; interactions
 
-(defn add-default-pages [config]
-  (cond-> config
-    (= 0 (count (:pages config))) (assoc :pages (:pages default-config))))
-
 (defn background-images
   [config]
   (->> (conj (:pages config) config)
@@ -238,12 +349,22 @@
     (to-first-part (build-parts (:contents page)))
     (adapt-parts parts (build-parts (:contents page)))))
 
+(defn build-explain
+  [explained]
+  (let [problems (:cljs.spec.alpha/problems explained)]
+    (str "Problems in config at : "
+         (string/join ", " (map #(str (:in %)) (take 4 problems)))
+         (when (> (count problems) 4) (str " (and " (- (count problems) 4) " more...)")))))
+
+(defn valid-config [config]
+  (when (not (s/valid? ::config config))
+    (throw #js {:message (build-explain (s/explain-data ::config config))})))
+
 (defn init-config [config]
-  (set! (. js/document -title) (or-config config [:title]))
+  (valid-config config)
   (swap! app-state
     (fn [state]
       (let [{:keys [current parts]} state
-            config (add-default-pages config)
             pages (:pages config)
             index (min current (dec (count pages)))
             parts (init-parts (nth pages index) parts)]
@@ -253,7 +374,8 @@
             (assoc :config config
                    :phase :loaded
                    :current index
-                   :parts parts))))))
+                   :parts parts)))))
+  (set! (. js/document -title) (or-config config [:title])))
 
 (defn fetch-error [r]
   (js/Error. (str "Unable to load config.edn (" (.-status r) " " (.-statusText r) ").")))
@@ -347,12 +469,11 @@
 
 (defn text-content
   [index content]
-  (let [[string props] content
-        {:keys [link transform]} props
+  (let [{:keys [string link transform]} content
         tag (if (some? link) :a :span)
         href (when (string? link) link)
         on-click (when (number? link) (partial go-page link))
-        style (merge (dissoc props :link :transform)
+        style (merge (dissoc content :string :link :transform)
                      (transform-to-css transform))
         attrs (cond-> {:key index}
                 (some? href) (assoc :href href :target "_blank")
@@ -362,32 +483,39 @@
 
 (defn text-contents
   [contents]
-  (map-indexed (fn [index content]
-                 (if (not (vector? content))
-                   content
-                   (text-content index content)))
-    contents))
+  (->> (if (or (string? contents) (map? contents)) [contents] contents)
+       (map-indexed (fn [index content]
+                      (if (not (map? content))
+                        content
+                        (text-content index content))))))
 
 (rum/defc text < rum/static
   [content config]
   (let [content (or-default content config :text)
         style (dissoc content :text)]
-    [:div.rum {:style style}
+    [:div.text {:style style}
       (text-contents (:text content))]))
 
 (rum/defc code < rum/static
   [content config]
   (let [content (or-default content config :code)
-        rum-content (->> (:code content)
-                         (map-indexed (fn [index content]
-                                        (cond
-                                          (not (vector? content)) content
-                                          (map? (second content)) (assoc-in content [2 :key] index)
-                                          :else (into [(first content) {:key index}] (rest content))))))
         style (dissoc content :code)]
     [:pre {:style style}
      [:code
-       rum-content]]))
+      (text-contents (:code content))]]))
+
+(rum/defc liste < rum/static
+  [content config part]
+  (let [{:keys [list contents fragmented] :as content} (or-default content config :list)
+        contents (if (true? fragmented)
+                   (take (inc (:current part)) contents)
+                   contents)
+        tag (if (= :bullet list) :ul :ol)
+        style (dissoc content :list :contents :fragmented)]
+    [tag {:style style}
+     (map-indexed (fn [index content]
+                    [:li {:key index} (text-contents content)])
+       contents)]))
 
 (rum/defc page-number
   [content config]
@@ -403,11 +531,12 @@
 (declare fragments steps section)
 
 (defn dispatch [content config part]
-  (condp #(contains? %2 %1) content
+  (case (component-type content)
     :title (title content config)
     :image (image content config)
     :text (text content config)
     :code (code content config)
+    :list (liste content config part)
     :page-number (page-number content config)
     :section (section content config part)
     :fragments (fragments content config part)
@@ -428,8 +557,9 @@
         contents (:section content)
         parts (:children part)
         style (dissoc content :section)]
-    [:div.section {:style style}
-     (components contents config parts)]))
+    [:div.outer-section {:style style}
+     [:div.inner-section
+      (components contents config parts)]]))
 
 (rum/defc fragments < rum/static
   [content config part]

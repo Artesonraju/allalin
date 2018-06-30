@@ -144,6 +144,8 @@ header, footer, aside {
 }
 
 .abnormal h1 {
+    position: static;
+    text-align: left;
     text-transform: uppercase;
     font-size: 5%;
 }
@@ -248,7 +250,7 @@ img {
   left: 5%;
 }
 
-.rum {
+.text {
   position: absolute;
   font-size: 4%;
   top: 5%;
@@ -273,13 +275,35 @@ pre {
   right: 1%;
 }
 
-.section {
-    position: absolute;
+.outer-section {
+    position: relative;
     top: 5%;
     left: 5%;
-    overflow: hidden;
+}
+
+.inner-section {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden
 }
 
 a {
     cursor: pointer;
+}
+
+ol, ul {
+    list-style-position: inside;
+    position: absolute;
+    font-size: 4%;
+    top: 5%;
+    left: 5%;
+}
+
+ul {
+    list-style-type: disc;
+}
+
+ol {
+    list-style-type: decimal;
 }

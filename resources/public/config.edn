@@ -11,9 +11,10 @@
                       :width "40%"}
                      {:title "Allalin Presentation Framework"}
                      {:text ["Text "
-                             ["transformed" {:transform [:italic :bold :underlined]
-                                             :link "http://google.com"
-                                             :color "lightblue"}]]
+                             {:string "transformed"
+                              :transform [:italic :bold :underlined]
+                              :link "http://google.com"
+                              :color "lightblue"}]
                       :top "55%"
                       :left "10%"
                       :width "80%"}
@@ -41,7 +42,10 @@
                               {:text "Second step"
                                :top "45%"
                                :left "60%"}]}
-                     {:page-number :total}]}
+                     {:page-number :total}
+                     {:list :numbered
+                      :fragmented true
+                      :contents ["a" "b"]}]}
          {:title "Page 2"
           :background-image "back-image.jpg"
           :background-color "cyan"

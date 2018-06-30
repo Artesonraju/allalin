@@ -32,14 +32,15 @@ Needs a recent browser (supporting the fetch API and flexbox)
 - [x] Steps
 - [x] Page number
 - [x] Section
-- [ ] Table
-- [ ] Lists
+- [x] Links
+- [x] Lists
+- [ ] Tables
 
 ### Style
 - [x] Responsive CSS
 - [x] Transition
-- [ ] Default style
-- [ ] Custom style
+- [x] Default style
+- [x] Custom style
 
 ## Setup
 
