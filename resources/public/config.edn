@@ -10,20 +10,15 @@
                       :top "20%"
                       :width "40%"}
                      {:title "Allalin Presentation Framework"}
-                     {:rum ["Text "
-                            [:i {:style {:color "lightblue"}} "italic"]
-                            " "
-                            [:b "bold"]
-                            " "
-                            [:u "underlined"]
-                            " "
-                            [:s "line-through"]
-                            " "
-                            [:em "upper-case"]]
+                     {:text ["Text "
+                             ["transformed" {:transform [:italic :bold :underlined]
+                                             :link "http://google.com"
+                                             :color "lightblue"}]]
                       :top "55%"
                       :left "10%"
                       :width "80%"}
-                     {:section [{:rum "Section 1"}]
+                     {:section [{:text "Section 1"
+                                 :font-size "7%"}]
                       :background-color "blue"
                       :top "91%"
                       :left "10%"
@@ -33,17 +28,17 @@
                       :top "75%"
                       :left "10%"
                       :width "80%"}
-                     {:fragments [{:rum "First fragment"
+                     {:fragments [{:text "First fragment"
                                    :top "85%"
                                    :left "10%"}
-                                  {:rum "Second fragment"
+                                  {:text "Second fragment"
                                    :top "85%"
                                    :left "50%"}]}
-                     {:steps [{:rum []}
-                              {:rum "First step"
+                     {:steps [{:text []}
+                              {:text "First step"
                                :top "45%"
                                :left "50%"}
-                              {:rum "Second step"
+                              {:text "Second step"
                                :top "45%"
                                :left "60%"}]}
                      {:page-number :total}]}

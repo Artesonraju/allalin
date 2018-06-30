@@ -255,26 +255,6 @@ img {
   left: 5%;
 }
 
-i {
-    font-style: italic;
-}
-
-b {
-    font-weight: bold;
-}
-
-u {
-    text-decoration: underline;
-}
-
-s {
-    text-decoration: line-through;
-}
-
-em {
-    text-transform: uppercase;
-}
-
 pre {
   position: absolute;
   font-size: 3%;
@@ -297,6 +277,9 @@ pre {
     position: absolute;
     top: 5%;
     left: 5%;
-    border: 1% solid black;
     overflow: hidden;
+}
+
+a {
+    cursor: pointer;
 }

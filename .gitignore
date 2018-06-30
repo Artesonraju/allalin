@@ -1,4 +1,5 @@
 /resources/public/js/compiled/**
+.rebel_readline_history
 figwheel_server.log
 pom.xml
 *jar
