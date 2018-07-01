@@ -62,7 +62,7 @@
                    :contents []}
           :contents [{:title "Page layout"}
                      {:text "Header, footer, asides and background are defined globally but can be overriden at page level."
-                      :top "35%"}]}
+                      :top "30%"}]}
 
          {:contents [{:title "Basic components"}
                      {:text ["Some text, "

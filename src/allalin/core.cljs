@@ -602,12 +602,12 @@
         base-height (calc-vw height ratio)
         base-width (calc-vh 100 ratio)
         contents (or-config page config [key-tag :contents])
-        style {:background-color (or-config page config [key-tag :background-color])
-               :background-image (or-config page config [key-tag :background-image])
-               :color (or-config page config [key-tag :color])
-               :flex-basis base-height}]
+        style (when (> height 0)
+                {:background-color (or-config page config [key-tag :background-color])
+                 :background-image (or-config page config [key-tag :background-image])
+                 :color (or-config page config [key-tag :color])})]
     [:div.bg-ease {:class (str str-tag "-wrapper")
-                   :style style}
+                   :style (merge {:flex-basis base-height} style)}
      [key-tag (components contents config nil)]
      [:style
       (str str-tag " {height: " base-height "; }
@@ -620,11 +620,11 @@
         ratio (or-config config [:screen-ratio])
         base-width (calc-vh width ratio)
         contents (or-config page config [key-position :contents])
-        style {:background-color (or-config page config [key-position :background-color])
-               :background-image (or-config page config [key-position :background-image])
-               :color (or-config page config [key-position :color])
-               :flex-basis base-width}]
-    [:div.aside-wrapper.bg-ease {:style style}
+        style (when (> width 0)
+                {:background-color (or-config page config [key-position :background-color])
+                 :background-image (or-config page config [key-position :background-image])
+                 :color (or-config page config [key-position :color])})]
+    [:div.aside-wrapper.bg-ease {:style (merge {:flex-basis base-width} style)}
      [:aside {:class str-position} (components contents config nil)]
      [:style
       (str "@media (min-width: " (/ 100 ratio)  "vh) { aside." str-position " {width: " base-width "; }}")]]))
