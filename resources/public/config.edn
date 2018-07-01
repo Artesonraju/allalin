@@ -1,52 +1,152 @@
 {:screen-ratio 0.625
- :left {:background-color "blue"
-        :color "white"
+ :title "Allalin - Presentation framework"
+ :background-color "#212121"
+ :color "#ddd"
+ :background-position "center"
+ :left {:background-color "#ddd"
+        :color "#444"
         :width 5
         :contents [{:image "icon.svg"
                     :top "1%"
                     :left "10%"
-                    :width "80%"}]}
- :pages [{:contents [{:image "back-image.jpg"
-                      :top "20%"
-                      :width "40%"}
-                     {:title "Allalin Presentation Framework"}
-                     {:text ["Text "
-                             {:string "transformed"
-                              :transform [:italic :bold :underlined]
-                              :link "http://google.com"
-                              :color "lightblue"}]
-                      :top "55%"
-                      :left "10%"
-                      :width "80%"}
-                     {:section [{:text "Section 1"
-                                 :font-size "7%"}]
-                      :background-color "blue"
-                      :top "91%"
-                      :left "10%"
-                      :width "80%"
-                      :height "7%"}
-                     {:code "(into [] :a 1) {:x 1}"
-                      :top "75%"
-                      :left "10%"
-                      :width "80%"}
-                     {:fragments [{:text "First fragment"
-                                   :top "85%"
-                                   :left "10%"}
-                                  {:text "Second fragment"
-                                   :top "85%"
-                                   :left "50%"}]}
-                     {:steps [{:text []}
-                              {:text "First step"
-                               :top "45%"
-                               :left "50%"}
-                              {:text "Second step"
-                               :top "45%"
-                               :left "60%"}]}
-                     {:page-number :total}
-                     {:list :numbered
-                      :fragmented true
-                      :contents ["a" "b"]}]}
-         {:title "Page 2"
-          :background-image "back-image.jpg"
+                    :width "80%"}
+                   {:page-number :total
+                    :font-size "1.8%"
+                    :bottom "1%"
+                    :left "25%"}]}
+ :footer {:background-color "#0871a1"
+          :color "#eee"
+          :height 5
+          :contents [{:text ["Allalin Presentation Framework - "
+                             {:string "Github repo"
+                              :transform [:underlined]
+                              :link "https://github.com/Artesonraju/allalin"
+                              :color "#fff"}]
+                      :font-size "2%"
+                      :top "15%"
+                      :left "50%"
+                      :width "50%"}]}
+ :pages [{:contents [{:title "Allalin Presentation Framework"
+                      :level 1
+                      :top "15%"}
+                     {:title "built with Clojurescript, Rum and Figwheel"
+                      :level 5
+                      :font-size "3%";
+                      :top "65%"}
+                     {:text "(Use arrows to navigate through the slides)"
+                      :font-size "2%"
+                      :left "47%"
+                      :top "80%"}]}
+
+         {:contents [{:title "Configuration"}
+                     {:text "Allalin presentations are configured through an edn format file (config.edn) where the different properties, pages and components are defined."
+                      :top "25%"}
+                     {:text "This presentation aims at giving exemples to help build a custom one."
+                      :top "65%"}]}
+
+         {:background-image "back-image.jpg"
           :background-color "cyan"
-          :background-position "center top"}]}
+          :background-position "center top"
+          :left {:width 0
+                 :background-color "#212121"
+                 :contents []}
+          :right {:background-color "#ddd"
+                  :color "#444"
+                  :width 20
+                  :contents [{:image "icon.svg"
+                              :top "1%"
+                              :left "3%"
+                              :width "20%"}]}
+          :footer {:height 0
+                   :background-color "#212121"
+                   :contents []}
+          :contents [{:title "Page layout"}
+                     {:text "Header, footer, asides and background are defined globally but can be overriden at page level."
+                      :top "35%"}]}
+
+         {:contents [{:title "Basic components"}
+                     {:text ["Some text, "
+                             {:string "some colored italic text"
+                              :transform [:italic]
+                              :color "#0871a1"}]
+                      :top "22%"}
+                     {:text {:string "A link to the previous page"
+                             :link "1"}
+                      :top "35%"}
+                     {:text {:string "A link to the the github repo"
+                             :link "https://github.com/Artesonraju/allalin"}
+                      :top "45%"}
+                     {:code ";Some lisp code
+               (into [] :a 1) {:x 1}"
+                      :top "60%"
+                      :width "80%"}
+                     {:image "an-image.png"
+                      :top "80%"
+                      :width "20%"}]}
+
+         {:contents [{:title "Sections"}
+                     {:section [{:text "A section containing some big text"
+                                 :font-size "6%"
+                                 :width "90%"}]
+                      :background-color "#eee"
+                      :color "#222"
+                      :top "22%"
+                      :width "40%"
+                      :height "65%"}
+                     {:section [{:title "Another section with a title"
+                                 :level 3}]
+                      :background-color "#777"
+                      :left "55%"
+                      :top "22%"
+                      :width "40%"
+                      :height "65%"}]}
+
+         {:contents [{:title "Fragments and Steps"}
+                     {:section [{:fragments [{:text "Hit right arrow..."
+                                              :top "20%"
+                                              :left "10%"}
+                                             {:text "...to display ..."
+                                              :top "40%"
+                                              :left "10%"}
+                                             {:text "the fragments"
+                                              :top "60%"
+                                              :left "10%"}]}]
+                      :top "22%"
+                      :width "45%"
+                      :height "65%"}
+                     {:section [{:steps [{:text []}
+                                         {:text "Hit right arrow..."
+                                          :top "40%"
+                                          :left "10%"}
+                                         {:text "...to display ..."
+                                          :top "60%"
+                                          :left "10%"}
+                                         {:text "the steps one after another"
+                                          :top "20%"
+                                          :left "10%"}]}]
+                      :left "55%"
+                      :top "22%"
+                      :width "45%"
+                      :height "65%"}]}
+
+         {:contents [{:title "Lists"}
+                     {:list :numbered
+                      :contents ["A numbered" "list"]
+                      :top "20%"}
+                     {:list :bullet
+                      :contents ["A bulleted" "list"]
+                      :top "50%"}
+                     {:list :bullet
+                      :fragmented true
+                      :contents ["A fragmented" "list !"]
+                      :top "80%"}]}
+
+         {:contents [{:title "Contribute and thanks"}
+                     {:text "Thanks to all developers whose libraries were used"
+                      :top "35%"}
+                     {:text ["If you would like to contribute or fork the project, go to the "
+                             {:string "github repo"
+                              :color "#0e75a4"
+                              :transform [:underlined]
+                              :link "https://github.com/Artesonraju/allalin"}]
+                      :top "60%"}]}]}

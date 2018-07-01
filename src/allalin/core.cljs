@@ -113,7 +113,8 @@
 (s/def :list/fragmented boolean?)
 (s/def :list/contents (s/coll-of ::text))
 (defmethod content-spec :list [_]
-  (s/keys :req-un [::list :list/fragmented :list/contents]))
+  (s/keys :req-un [::list  :list/contents]
+          :opt-un [:list/fragmented]))
 
 (s/def ::section (s/coll-of ::content))
 (defmethod content-spec :section [_]
@@ -690,10 +691,12 @@
         ratio (or-config config [:screen-ratio])
         base-width (calc-vh 100 ratio)
         bg-color (or-config page config [:background-color])
+        color (or-config page config [:color])
         bg-image (or-config page config [:background-image])
         bg-position (or-config page config [:background-position])
         style {:style (cond-> {}
                         (some? bg-color) (assoc :background-color bg-color)
+                        (some? color) (assoc :color color)
                         (some? bg-image) (assoc :background-image (str "url(./images/" bg-image ")")
                                                 :background-size "cover"
                                                 :background-position bg-position))}]

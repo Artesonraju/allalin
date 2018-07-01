@@ -1,48 +1,19 @@
-# allalin
+# Allalin
 
 Presentation framework built with Clojurescript, Rum and Figwheel
 
-## Overview
+## Usage
 
-Needs a recent browser (supporting the fetch API and flexbox)
+Allalin only works on recent browsers (supporting the fetch API and flexbox)
 
-## Roadmap
+### Get started
 
-### Global
-- [x] Load edn conf and data file
-- [x] Error management
-- [X] Page display
-- [x] Controls
-- [x] Configuration reload
-- [ ] Configuration live edition
+Download and extract the allalin.zip archive.
+To see the presentation, open index.html in a browser to see the presentation.
+Edit config.edn to build your presentation.
+Press R to reload the presentation once you changed and saved the configuration.
 
-### Conf
-- [x] Header
-- [x] Footer
-- [x] Aside
-- [x] Icon and title
-- [x] Background Image
-
-### Content
-- [x] Titles
-- [x] Image
-- [x] Styled Text
-- [x] Code
-- [x] Fragments
-- [x] Steps
-- [x] Page number
-- [x] Section
-- [x] Links
-- [x] Lists
-- [ ] Tables
-
-### Style
-- [x] Responsive CSS
-- [x] Transition
-- [x] Default style
-- [x] Custom style
-
-## Setup
+## Development
 
 To get an interactive development environment run:
 
@@ -63,6 +34,23 @@ To create a production build run:
 
 And open your browser in `resources/public/index.html`. You will not
 get live reloading, nor a REPL. 
+
+## Improvement ideas (in no particular order)
+
+- [ ] Position by bottom and right
+- [ ] Document configuration
+- [ ] Fix fonts not really responsive
+- [ ] Responsive sections borders
+- [ ] Remove need for percents in config
+- [ ] Better config errors : print readable cause
+- [ ] In browser config edition
+- [ ] Touch events
+- [ ] Print mode
+- [ ] Hide mode
+- [ ] Wysiwig editor
+- [ ] Progress bar
+- [ ] Speaker view (clock and notes)
+- [ ] Slide transitions (eg. for background images)
 
 ## License
 
