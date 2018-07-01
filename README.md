@@ -1,17 +1,17 @@
 # Allalin
 
-Presentation framework built with Clojurescript, Rum and Figwheel
+Presentation framework built with Clojurescript, Rum and Figwheel.
+
+[See the presentation demo.](https://artesonraju.github.io/allalin/)
 
 ## Usage
 
-Allalin only works on recent browsers (supporting the fetch API and flexbox)
-
-### Get started
+Allalin only works on browsers supporting the fetch API and flexbox.
 
 Download and extract the allalin.zip archive.
-To see the presentation, open index.html in a browser to see the presentation.
+Open index.html in a browser to see the default presentation.
 Edit config.edn to build your presentation.
-Press R to reload the presentation once you changed and saved the configuration.
+Once you changed and saved the configuration, press R to load your changes.
 
 ## Development
 
@@ -37,20 +37,19 @@ get live reloading, nor a REPL.
 
 ## Improvement ideas (in no particular order)
 
-- [ ] Position by bottom and right
-- [ ] Document configuration
-- [ ] Fix fonts not really responsive
-- [ ] Responsive sections borders
-- [ ] Remove need for percents in config
-- [ ] Better config errors : print readable cause
-- [ ] In browser config edition
-- [ ] Touch events
-- [ ] Print mode
-- [ ] Hide mode
-- [ ] Wysiwig editor
-- [ ] Progress bar
-- [ ] Speaker view (clock and notes)
-- [ ] Slide transitions (eg. for background images)
+- Document configuration
+- Fix fonts not really responsive
+- Responsive sections borders
+- Remove need for percents in config
+- Better config errors : print readable cause
+- In browser config edition
+- Touch events
+- Print mode
+- Hide mode
+- Wysiwig editor
+- Progress bar
+- Speaker view (clock and notes)
+- Better slide transitions
 
 ## License
 

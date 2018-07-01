@@ -13,7 +13,24 @@
                      :background-color "#eee"
                      :background-position "center"
                      :title "Allalin - Presentation framework"
-                     :default {:title {:level 2}}
+                     :default {:title {:level 2
+                                       :top "5%"
+                                       :left "5%"}
+                               :image {:top "5%"
+                                       :left "5%"}
+                               :text {:top "5%"
+                                      :left "5%"}
+                               :code {:top "5%"
+                                      :left "5%"}
+                               :list {:top "5%"
+                                      :left "5%"}
+                               :page-number {:top "5%"
+                                             :left "5%"}
+                               :section {:top "5%"
+                                         :left "5%"}}
+                     :text {:top "20%"
+                            :left "5%"}
+
                      :header {:background-color "inherit"
                               :color "inherit"
                               :height 0
@@ -66,10 +83,15 @@
 
 (defn or-default
   [content config element]
-  (merge
-    (get-in default-config [:default element])
-    (get-in config [:default element])
-    content))
+  (let [default (merge
+                  (get-in default-config [:default element])
+                  (get-in config [:default element]))]
+    (cond-> default
+      (some? (:top content)) (dissoc :bottom)
+      (some? (:bottom content)) (dissoc :top)
+      (some? (:left content)) (dissoc :right)
+      (some? (:right content)) (dissoc :left)
+      true (merge content))))
 
 ; config spec
 
@@ -601,7 +623,7 @@
         ratio (or-config config [:screen-ratio])
         base-height (calc-vw height ratio)
         base-width (calc-vh 100 ratio)
-        contents (or-config page config [key-tag :contents])
+        contents (when (> height 0) (or-config page config [key-tag :contents]))
         style (when (> height 0)
                 {:background-color (or-config page config [key-tag :background-color])
                  :background-image (or-config page config [key-tag :background-image])
@@ -619,7 +641,7 @@
         width (or-config page config [key-position :width])
         ratio (or-config config [:screen-ratio])
         base-width (calc-vh width ratio)
-        contents (or-config page config [key-position :contents])
+        contents (when (> width 0) (or-config page config [key-position :contents]))
         style (when (> width 0)
                 {:background-color (or-config page config [key-position :background-color])
                  :background-image (or-config page config [key-position :background-image])
