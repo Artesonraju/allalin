@@ -335,21 +335,25 @@
 
 (defn foreground-images
   [contents]
-  (->> contents
-       (mapcat (fn [content]
-                 (cond
-                   (is-image content) (vec (:image content))
-                   (is-complex-component content) (foreground-images (content-children content))
-                   :else nil)))
-       (filterv some?)))
+  (mapcat (fn [content]
+            (cond
+              (is-image content) [(:image content)]
+              (is-complex-component content) (foreground-images (content-children content))
+              :else nil))
+    contents))
 
 (defn preload-images
   [config]
-  (let [inner-images (->> (:pages config)
-                          (mapcat #(foreground-images (:contents %))))]
-    (->> (concat inner-images (background-images config))
-         (map #(set! (.-src (js/Image.)) (str "./images/" %)))
-         (doall))))
+  (->> (:pages config)
+       (mapcat (juxt :header :footer :left :right identity))
+       (filter some?)
+       (mapcat :contents)
+       (foreground-images)
+       (filter some?)
+       (concat (background-images config))
+       (distinct)
+       (map #(set! (.-src (js/Image.)) (str "./images/" %)))
+       (doall)))
 
 (defn adapt-parts
   [old-parts new-parts]
@@ -410,18 +414,19 @@
                                   :error err))))
 
 (defn load-conf []
-  (set! (. js/document -title) "Allalin - Loading...")
-  (swap! app-state assoc :phase :loading)
-  (-> (js/fetch "./config.edn")
-      (.then (fn [r]
-               (if (.-ok r)
-                 r
-                 (throw (fetch-error r)))))
-      (.then (fn [r] (.text r)))
-      (.then (fn [text]
-               (let [config (read-string text)]
-                 (init-config config))))
-      (.catch (fn [err] (config-error err)))))
+  (when (not (get-in @app-state [:config :disable-reload]))
+    (set! (. js/document -title) "Allalin - Loading...")
+    (swap! app-state assoc :phase :loading)
+    (-> (js/fetch "./config.edn")
+        (.then (fn [r]
+                 (if (.-ok r)
+                   r
+                   (throw (fetch-error r)))))
+        (.then (fn [r] (.text r)))
+        (.then (fn [text]
+                 (let [config (read-string text)]
+                   (init-config config))))
+        (.catch (fn [err] (config-error err))))))
 
 (defn go-start []
   (swap! app-state (fn [state]
@@ -499,7 +504,9 @@
         style (merge (dissoc content :string :link :transform)
                      (transform-to-css transform))
         attrs (cond-> {:key index}
-                (some? href) (assoc :href href :target "_blank")
+                (some? href) (assoc :href href
+                                    :target "_blank"
+                                    :rel "noreferrer noopener")
                 (some? style) (assoc :style style)
                 (some? on-click) (assoc :on-click on-click))]
     [tag attrs string]))
@@ -692,13 +699,13 @@
 (def key-listener-mixin
   {:did-mount (fn [state]
                 (.addEventListener js/document
-                  "keypress"
+                  "keydown"
                   key-handler
                   false)
                 (assoc state ::key-handler key-handler))
    :will-unmount (fn [state]
                    (.removeEventListener js/document
-                     "keypress"
+                     "keydown"
                      (::key-handler state)
                      false))})
 

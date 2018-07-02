@@ -1,4 +1,5 @@
-{:screen-ratio 0.625
+{:screen-ratio 0.625 ; 4/3 => 0.75, 16/10 => 0.625, 16:9 => 0.5625
+ ; :disable-reload true
  :title "Allalin - Presentation framework"
  :background-color "#212121"
  :color "#ddd"
@@ -51,7 +52,8 @@
 
          {:background-image "back-image.jpg"
           :background-color "#32558d"
-          :background-position "center top"
+          :color "#fff"
+          :background-position "right top"
           :left {:width 0
                  :background-color "#212121"}
           :right {:background-color "#ddd"
@@ -65,7 +67,7 @@
                    :background-color "#212121"}
           :contents [{:title "Page layout"}
                      {:text "Header, footer, asides and background are defined globally but can be overriden at page level."
-                      :top "20%"}]}
+                      :top "17%"}]}
 
          {:contents [{:title "Basic components"}
                      {:text ["Some text, "
@@ -87,9 +89,10 @@
                       :top "80%"
                       :width "20%"}]}
 
+
          {:contents [{:title "Sections"}
-                     {:section [{:text "A section containing some big text"
-                                 :font-size "6%"
+                     {:section [{:text "A section with some big text"
+                                 :font-size "7%"
                                  :width "90%"}]
                       :background-color "#eee"
                       :color "#222"
