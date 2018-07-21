@@ -40,7 +40,6 @@ get live reloading, nor a REPL.
 - Document configuration
 - Fix fonts not really responsive
 - Responsive sections borders
-- Remove need for percents in config
 - Better config errors : print readable cause
 - In browser config edition
 - Touch events

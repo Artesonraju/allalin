@@ -7,7 +7,7 @@
  :left {:background-color "#ddd"
         :color "#444"
         :width 5
-        :contents [{:image "icon.svg"
+        :contents [{:image "allalin.svg"
                     :top "1%"
                     :left "10%"
                     :width "80%"}
