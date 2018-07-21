@@ -27,10 +27,15 @@
                                :page-number {:top "5%"
                                              :left "5%"}
                                :section {:top "5%"
-                                         :left "5%"}}
+                                         :left "5%"
+                                         :border "0"
+                                         :border-color "red"}}
                      :text {:top "20%"
                             :left "5%"}
-
+                     :header-left :left
+                     :header-right :right
+                     :footer-left :left
+                     :footer-right :right
                      :header {:background-color "inherit"
                               :color "inherit"
                               :height 0
@@ -585,10 +590,17 @@
   [content config part]
   (let [content (or-default content config :section)
         contents (:section content)
+        {:keys [border border-color background-color]} content
         parts (:children part)
-        style (dissoc content :section)]
+        style (-> content
+                  (dissoc :section :border :border-color :background-color)
+                  (assoc :background-color border-color))]
     [:div.outer-section {:style style}
-     [:div.inner-section
+     [:div.inner-section {:style {:top (str border "%")
+                                  :left (str border "%")
+                                  :width (str (- 100 (* 2 border)) "%")
+                                  :height (str (- 100 (* 2 border)) "%")
+                                  :background-color background-color}}
       (components contents config parts)]]))
 
 (rum/defc fragments < rum/static
@@ -607,20 +619,10 @@
 
 ; structure components
 
-(defn calc-vh [size ratio]
-  (str "calc(" size "vh / " ratio ")"))
-
-(defn calc-vw [size ratio]
-  (str "calc(" size "vw * " ratio ")"))
-
 (rum/defc main < rum/static
   [page config parts]
-  (let [width (- 100
-                 (or-config page config [:left :width])
-                 (or-config page config [:right :width]))
-        ratio (or-config config [:screen-ratio])
-        contents (:contents page)]
-    [:main {:style {:flex-basis (calc-vh width ratio)}}
+  (let [contents (:contents page)]
+    [:main
      (components contents config parts)]))
 
 (rum/defc runner < rum/static
@@ -628,48 +630,91 @@
   (let [str-tag (name key-tag)
         height (or-config page config [key-tag :height])
         ratio (or-config config [:screen-ratio])
-        base-height (calc-vw height ratio)
-        base-width (calc-vh 100 ratio)
         contents (when (> height 0) (or-config page config [key-tag :contents]))
+        base-height (* height ratio)
         style (when (> height 0)
                 {:background-color (or-config page config [key-tag :background-color])
                  :background-image (or-config page config [key-tag :background-image])
-                 :color (or-config page config [key-tag :color])})]
+                 :color (or-config page config [key-tag :color])})
+        adaptable-row (str "minmax(" base-height "vh , " base-height "vw)")
+        rows (if (= key-tag :header) (str "1fr " adaptable-row) (str adaptable-row " 1fr"))]
     [:div.bg-ease {:class (str str-tag "-wrapper")
-                   :style (merge {:flex-basis base-height} style)}
-     [key-tag (components contents config nil)]
-     [:style
-      (str str-tag " {height: " base-height "; }
-@media (min-width: " (/ 100 ratio)  "vh) { " str-tag " {height: 100%; width: " base-width "; }}")]]))
+                   :style (merge style
+                                 {:grid-template-rows rows})}
+     [key-tag
+      (components contents config nil)]]))
 
 (rum/defc aside < rum/static
   [key-position page config]
   (let [str-position (name key-position)
         width (or-config page config [key-position :width])
         ratio (or-config config [:screen-ratio])
-        base-width (calc-vh width ratio)
         contents (when (> width 0) (or-config page config [key-position :contents]))
         style (when (> width 0)
                 {:background-color (or-config page config [key-position :background-color])
                  :background-image (or-config page config [key-position :background-image])
-                 :color (or-config page config [key-position :color])})]
-    [:div.aside-wrapper.bg-ease {:style (merge {:flex-basis base-width} style)}
-     [:aside {:class str-position} (components contents config nil)]
-     [:style
-      (str "@media (min-width: " (/ 100 ratio)  "vh) { aside." str-position " {width: " base-width "; }}")]]))
+                 :color (or-config page config [key-position :color])})
+        adaptable-col (str "minmax(auto, " (/ width ratio) "vh)")
+        cols (if (= key-position :left) (str "1fr " adaptable-col) (str adaptable-col " 1fr"))]
 
-(rum/defc middle < rum/static
-  [page config parts]
-  (let [height (- 100
-                  (or-config page config [:header :height])
-                  (or-config page config [:footer :height]))
-        ratio (or-config config [:screen-ratio])]
-    [:div.middle {:style {:flex-basis (calc-vw height ratio)}}
-     (aside :left page config)
-     (main page config parts)
-     (aside :right page config)]))
+    [:div.bg-ease {:class (str str-position "-wrapper")
+                   :style (merge style
+                                 {:grid-template-columns cols})}
+     [:aside {:class str-position} (components contents config nil)]]))
 
 ; phase components
+
+(defn corner-area
+  [runner aside page config]
+  (let [height (or-config page config [runner :height])
+        width (or-config page config [aside :width])
+        default (or-config page config [(keyword (str (name runner) "-" (name aside)))])]
+    (if (or (and (= runner default) (or (> height 0) (= width 0)))
+            (and (> height 0) (= width 0)))
+      (name runner)
+      (name aside))))
+
+(defn grid-template
+  [page config]
+  (let [header-height (or-config page config [:header :height])
+        left-width (or-config page config [:left :width])
+        footer-height (or-config page config [:footer :height])
+        right-width (or-config page config [:right :width])
+        header-left (corner-area :header :left page config)
+        header-right (corner-area :header :right page config)
+        footer-left (corner-area :footer :left page config)
+        footer-right (corner-area :footer :right page config)]
+    {:grid-template-rows (str "minmax(" header-height "%, 1fr)"
+                              " minmax(auto, " (- 100 header-height footer-height)  "vw)"
+                              " minmax(" footer-height "%, 1fr)")
+     :grid-template-columns (str "minmax(" left-width "%, 1fr)"
+                              " minmax(auto, " (- 100 left-width right-width) "vh)"
+                              " minmax(" right-width "%, 1fr)")
+     :grid-template-areas (str "'" (string/join " " [header-left "header" header-right]) "'\n"
+                               "'" (string/join " " ["left" "main" "right"]) "'\n"
+                               "'" (string/join " " [footer-left "footer" footer-right]) "'")}))
+
+(defn loaded-style [page config]
+  (let [bg-color (or-config page config [:background-color])
+        color (or-config page config [:color])
+        bg-image (or-config page config [:background-image])
+        bg-position (or-config page config [:background-position])]
+    (cond-> (grid-template page config)
+      (some? bg-color) (assoc :background-color bg-color)
+      (some? color) (assoc :color color)
+      (some? bg-image) (assoc :background-image (str "url(./images/" bg-image ")")
+                              :background-size "cover"
+                              :background-position bg-position))))
+
+(rum/defc loaded < rum/static
+  [page config parts]
+  (let [style (loaded-style page config)]
+   [:div.root.fill {:style style}
+    (runner :header page config)
+    (aside :left page config)
+    (main page config parts)
+    (aside :right page config)
+    (runner :footer page config)]))
 
 (rum/defc loading < rum/static
   []
@@ -685,23 +730,25 @@
     [:h1 "Error :"]
     [:p (.-message error)]]])
 
-(rum/defc loaded < rum/static
-  [page config parts]
-  [:div.root.fill
-   (runner :header page config)
-   (middle page config parts)
-   (runner :footer page config)])
-
 ; app init
 
 (defonce _ (load-conf))
 
-(def key-listener-mixin
+(defn resize-handler
+  []
+  (let [window-height (.-innerHeight js/window)
+        window-width (.-innerWidth js/window)]
+    (swap! app-state (fn [state]
+                       (assoc state :window-height window-height
+                                    :window-width window-width)))))
+
+(def pres-listener-mixin
   {:did-mount (fn [state]
                 (.addEventListener js/document
                   "keydown"
                   key-handler
                   false)
+
                 (assoc state ::key-handler key-handler))
    :will-unmount (fn [state]
                    (.removeEventListener js/document
@@ -709,33 +756,19 @@
                      (::key-handler state)
                      false))})
 
-(rum/defc app < rum/reactive key-listener-mixin
+(rum/defc app < rum/reactive pres-listener-mixin
   []
   (let [{:keys [phase config current error parts]} (rum/react app-state)
         pages (or-config config [:pages])
         config (assoc config :page (inc current) :total-pages (count pages))
         page (if (= :loaded phase)
                (nth pages current)
-               {})
-        ratio (or-config config [:screen-ratio])
-        base-width (calc-vh 100 ratio)
-        bg-color (or-config page config [:background-color])
-        color (or-config page config [:color])
-        bg-image (or-config page config [:background-image])
-        bg-position (or-config page config [:background-position])
-        style {:style (cond-> {}
-                        (some? bg-color) (assoc :background-color bg-color)
-                        (some? color) (assoc :color color)
-                        (some? bg-image) (assoc :background-image (str "url(./images/" bg-image ")")
-                                                :background-size "cover"
-                                                :background-position bg-position))}]
-    [:div.fill.bg-ease style
+               {})]
+    [:div.fill.pres
      (case phase
        :loading (loading)
        :error (err error)
-       :loaded (loaded page config parts))
-     [:style
-      (str "@media (min-width: " (/ 100 ratio)  "vh) { #app {font-size: " base-width "; }}")]]))
+       :loaded (loaded page config parts))]))
 
 (rum/mount (app) (. js/document (getElementById "app")))
 

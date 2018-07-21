@@ -17,7 +17,7 @@
                     :right "10%"}]}
  :footer {:background-color "#0871a1"
           :color "#eee"
-          :height 5
+          :height 10
           :contents [{:text ["Allalin Presentation Framework - "
                              {:string "Github repo"
                               :transform [:underlined]
@@ -59,7 +59,7 @@
           :right {:background-color "#ddd"
                   :color "#444"
                   :width 20
-                  :contents [{:image "icon.svg"
+                  :contents [{:image "allalin.svg"
                               :top "1%"
                               :left "3%"
                               :width "20%"}]}
