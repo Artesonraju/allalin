@@ -28,10 +28,7 @@
                                              :left "5%"}
                                :section {:top "5%"
                                          :left "5%"
-                                         :border "0"
-                                         :border-color "red"}}
-                     :text {:top "20%"
-                            :left "5%"}
+                                         :border "0"}}
                      :header-left :left
                      :header-right :right
                      :footer-left :left
@@ -60,6 +57,8 @@
 (def simple-components #{:title :image :text :code :page-number})
 (def complex-components #{:section :list :fragments :steps})
 (def all-components (into simple-components complex-components))
+
+(def draw-height 1000)
 
 ; helpers
 
@@ -392,6 +391,18 @@
   (when (not (s/valid? ::config config))
     (throw #js {:message (build-explain (s/explain-data ::config config))})))
 
+(defn update-scale
+  [state]
+  (let [window-height (.-innerHeight js/window)
+        window-width (.-innerWidth js/window)
+        screen-ratio (or-config (:config state) [:screen-ratio])
+        window-ratio (/ window-height window-width)
+        scale (if (> screen-ratio window-ratio)
+                (/ window-height draw-height)
+                (/ window-width (/ draw-height screen-ratio)))]
+    (assoc state :resize {:scale scale
+                          :window-ratio window-ratio})))
+
 (defn init-config [config]
   (valid-config config)
   (swap! app-state
@@ -406,7 +417,8 @@
             (assoc :config config
                    :phase :loaded
                    :current index
-                   :parts parts)))))
+                   :parts parts)
+            (update-scale)))))
   (set! (. js/document -title) (or-config config [:title])))
 
 (defn fetch-error [r]
@@ -620,47 +632,116 @@
 ; structure components
 
 (rum/defc main < rum/static
-  [page config parts]
-  (let [contents (:contents page)]
-    [:main
-     (components contents config parts)]))
-
-(rum/defc runner < rum/static
-  [key-tag page config]
-  (let [str-tag (name key-tag)
-        height (or-config page config [key-tag :height])
+  [page config parts scale]
+  (let [contents (:contents page)
+        left-width (or-config page config [:left :width])
+        right-width (or-config page config [:right :width])
+        header-height (or-config page config [:header :height])
+        footer-height (or-config page config [:footer :height])
         ratio (or-config config [:screen-ratio])
-        contents (when (> height 0) (or-config page config [key-tag :contents]))
-        base-height (* height ratio)
+        width (- 100 left-width right-width)
+        height (- 100 header-height footer-height)]
+    [:main {:style {:min-width (str width "vw")
+                    :max-width (str (/ width ratio) "vh")
+                    :min-height (str height "vh")
+                    :max-height (str (* height ratio) "vw")}}
+      [:div.trans {:style {:width (* (/ width 100) (/ draw-height ratio))
+                           :height (* (/ height 100) draw-height)
+                           :transform (str "scale(" scale ")")}}
+       (components contents config parts)]]))
+
+(rum/defc header < rum/static
+  [page config scale header-left header-right]
+  (let [has-left (= :header header-left)
+        has-right (= :header header-right)
+        ratio (or-config config [:screen-ratio])
+        height (or-config page config [:header :height])
+        left-width (or-config page config [:left :width])
+        right-width (or-config page config [:right :width])
+        width (- 100 (if has-left 0 left-width) (if has-right 0 right-width))
+        contents (when (> height 0) (or-config page config [:header :contents]))]
+     [:header {:style {:grid-column-start (if has-left 2 3)
+                       :grid-column-end (if has-right 5 4)}}
+       [:div.trans {:style {:width (* (/ width 100) (/ draw-height ratio))
+                            :height (* (/ height 100) draw-height)
+                            :transform (str "scale(" scale ")")}};
+        (components contents config nil)]]))
+
+(rum/defc footer < rum/static
+  [page config scale footer-left footer-right]
+  (let [has-left (= :footer footer-left)
+        has-right (= :footer footer-right)
+        ratio (or-config config [:screen-ratio])
+        height (or-config page config [:footer :height])
+        left-width (or-config page config [:left :width])
+        right-width (or-config page config [:right :width])
+        width (- 100 (if has-left 0 left-width) (if has-right 0 right-width))
+        contents (when (> height 0) (or-config page config [:footer :contents]))]
+    [:footer {:style {:grid-column-start (if has-left 2 3)
+                      :grid-column-end (if has-right 5 4)
+                      :min-height (str height "vh")
+                      :max-height (str (* height ratio) "vw")}}
+       [:div.trans {:style {:width (* (/ width 100) (/ draw-height ratio))
+                            :height (* (/ height 100) draw-height)
+                            :transform (str "scale(" scale ")")}}
+        (components contents config nil)]]))
+
+(rum/defc left < rum/static
+  [page config scale header-left footer-left]
+  (let [has-header (= :left header-left)
+        has-footer (= :left footer-left)
+        ratio (or-config config [:screen-ratio])
+        width (or-config page config [:left :width])
+        header-height (or-config page config [:header :height])
+        footer-height (or-config page config [:footer :height])
+        height (- 100 (if has-header 0 header-height) (if has-footer 0 footer-height))
+        contents (when (> width 0) (or-config page config [:left :contents]))]
+    (println footer-left)
+    [:aside.left {:style {:grid-row-start (if has-header 2 3)
+                          :grid-row-end (if has-footer 5 4)
+                          :min-width (str width "vw")
+                          :max-width (str (/ width ratio) "vh")}}
+     [:div.trans {:style {:width (* (/ width 100) (/ draw-height ratio))
+                          :height (* (/ height 100) draw-height)
+                          :transform (str "scale(" scale ")")}}
+      (components contents config nil)]]))
+
+(rum/defc right < rum/static
+  [page config scale header-right footer-right]
+  (let [has-header (= :right header-right)
+        has-footer (= :right footer-right)
+        ratio (or-config config [:screen-ratio])
+        width (or-config page config [:right :width])
+        header-height (or-config page config [:header :height])
+        footer-height (or-config page config [:footer :height])
+        height (- 100 (if has-header 0 header-height) (if has-footer 0 footer-height))
+        contents (when (> width 0) (or-config page config [:right :contents]))]
+    [:aside.right {:style {:grid-row-start (if has-header 2 3)
+                           :grid-row-end (if has-footer 5 4)}}
+       [:div.trans {:style {:width (* (/ width 100) (/ draw-height ratio))
+                            :height (* (/ height 100) draw-height)
+                            :transform (str "scale(" scale ")")}}
+        (components contents config nil)]]))
+
+(rum/defc runner-wrapper < rum/static
+  [key-tag page config]
+  (let [height (or-config page config [key-tag :height])
         style (when (> height 0)
                 {:background-color (or-config page config [key-tag :background-color])
                  :background-image (or-config page config [key-tag :background-image])
-                 :color (or-config page config [key-tag :color])})
-        adaptable-row (str "minmax(" base-height "vh , " base-height "vw)")
-        rows (if (= key-tag :header) (str "1fr " adaptable-row) (str adaptable-row " 1fr"))]
-    [:div.bg-ease {:class (str str-tag "-wrapper")
-                   :style (merge style
-                                 {:grid-template-rows rows})}
-     [key-tag
-      (components contents config nil)]]))
+                 :color (or-config page config [key-tag :color])})]
+    [:div.bg-ease {:class (str (name key-tag) "-wrapper")
+                   :style style}]))
 
-(rum/defc aside < rum/static
+(rum/defc aside-wrapper < rum/static
   [key-position page config]
-  (let [str-position (name key-position)
-        width (or-config page config [key-position :width])
-        ratio (or-config config [:screen-ratio])
-        contents (when (> width 0) (or-config page config [key-position :contents]))
+  (let [width (or-config page config [key-position :width])
         style (when (> width 0)
                 {:background-color (or-config page config [key-position :background-color])
                  :background-image (or-config page config [key-position :background-image])
-                 :color (or-config page config [key-position :color])})
-        adaptable-col (str "minmax(auto, " (/ width ratio) "vh)")
-        cols (if (= key-position :left) (str "1fr " adaptable-col) (str adaptable-col " 1fr"))]
-
-    [:div.bg-ease {:class (str str-position "-wrapper")
-                   :style (merge style
-                                 {:grid-template-columns cols})}
-     [:aside {:class str-position} (components contents config nil)]]))
+                 :color (or-config page config [key-position :color])})]
+    [:div.bg-ease {:class (str (name key-position) "-wrapper")
+                   :style style}]))
 
 ; phase components
 
@@ -671,35 +752,15 @@
         default (or-config page config [(keyword (str (name runner) "-" (name aside)))])]
     (if (or (and (= runner default) (or (> height 0) (= width 0)))
             (and (> height 0) (= width 0)))
-      (name runner)
-      (name aside))))
-
-(defn grid-template
-  [page config]
-  (let [header-height (or-config page config [:header :height])
-        left-width (or-config page config [:left :width])
-        footer-height (or-config page config [:footer :height])
-        right-width (or-config page config [:right :width])
-        header-left (corner-area :header :left page config)
-        header-right (corner-area :header :right page config)
-        footer-left (corner-area :footer :left page config)
-        footer-right (corner-area :footer :right page config)]
-    {:grid-template-rows (str "minmax(" header-height "%, 1fr)"
-                              " minmax(auto, " (- 100 header-height footer-height)  "vw)"
-                              " minmax(" footer-height "%, 1fr)")
-     :grid-template-columns (str "minmax(" left-width "%, 1fr)"
-                              " minmax(auto, " (- 100 left-width right-width) "vh)"
-                              " minmax(" right-width "%, 1fr)")
-     :grid-template-areas (str "'" (string/join " " [header-left "header" header-right]) "'\n"
-                               "'" (string/join " " ["left" "main" "right"]) "'\n"
-                               "'" (string/join " " [footer-left "footer" footer-right]) "'")}))
+      runner
+      aside)))
 
 (defn loaded-style [page config]
   (let [bg-color (or-config page config [:background-color])
         color (or-config page config [:color])
         bg-image (or-config page config [:background-image])
         bg-position (or-config page config [:background-position])]
-    (cond-> (grid-template page config)
+    (cond-> {}
       (some? bg-color) (assoc :background-color bg-color)
       (some? color) (assoc :color color)
       (some? bg-image) (assoc :background-image (str "url(./images/" bg-image ")")
@@ -707,14 +768,55 @@
                               :background-position bg-position))))
 
 (rum/defc loaded < rum/static
-  [page config parts]
-  (let [style (loaded-style page config)]
-   [:div.root.fill {:style style}
-    (runner :header page config)
-    (aside :left page config)
-    (main page config parts)
-    (aside :right page config)
-    (runner :footer page config)]))
+  [page config parts resize]
+  (let [{:keys [scale window-ratio]} resize
+        style (loaded-style page config)
+        header-height (or-config page config [:header :height])
+        left-width (or-config page config [:left :width])
+        footer-height (or-config page config [:footer :height])
+        right-width (or-config page config [:right :width])
+        header-left (corner-area :header :left page config)
+        header-right (corner-area :header :right page config)
+        footer-left (corner-area :footer :left page config)
+        footer-right (corner-area :footer :right page config)
+        screen-ratio (or-config config [:screen-ratio])
+        higher? (> window-ratio screen-ratio)
+        main-height (- 100 header-height footer-height)
+        main-width (- 100 left-width right-width)
+        grid {:grid-template-rows (if higher?
+                                    (str "1fr " (* header-height screen-ratio) "vw"
+                                         " " (* main-height screen-ratio) "vw"
+                                         " " (* footer-height screen-ratio) "vw"
+                                         " 1fr")
+                                    (str "1fr " header-height "vh"
+                                         " " main-height "vh"
+                                         " " footer-height "vh"
+                                         " 1fr"))
+              :grid-template-columns (if higher?
+                                       (str "1fr " left-width "vw"
+                                            " " main-width "vw"
+                                            " " right-width "vw"
+                                            " 1fr")
+                                       (str "1fr " (/ left-width screen-ratio) "vh"
+                                            " " (/ main-width screen-ratio) "vh"
+                                            " " (/ right-width screen-ratio) "vh"
+                                            " 1fr"))
+              :grid-template-areas (str "'" (string/join " " (map name [header-left header-left :header header-right header-right])) "'\n"
+                                        "'" (string/join " " (map name [header-left header-left :header header-right header-right])) "'\n"
+                                        "'" (string/join " " (map name [:left :left :main :right :right])) "'\n"
+                                        "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'\n"
+                                        "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'")}]
+   [:div.root..bg-ease.fill {:style (merge style grid)}
+    (runner-wrapper :header page config)
+    (aside-wrapper :left page config)
+    (aside-wrapper :right page config)
+    (runner-wrapper :footer page config)
+    (main page config parts scale)
+    (header page config scale header-left header-right)
+    (left page config scale header-left footer-left)
+    (footer page config scale footer-left footer-right)
+    (right page config scale header-right footer-right)]))
+
 
 (rum/defc loading < rum/static
   []
@@ -736,11 +838,7 @@
 
 (defn resize-handler
   []
-  (let [window-height (.-innerHeight js/window)
-        window-width (.-innerWidth js/window)]
-    (swap! app-state (fn [state]
-                       (assoc state :window-height window-height
-                                    :window-width window-width)))))
+  (swap! app-state update-scale))
 
 (def pres-listener-mixin
   {:did-mount (fn [state]
@@ -748,27 +846,35 @@
                   "keydown"
                   key-handler
                   false)
-
-                (assoc state ::key-handler key-handler))
+                (.addEventListener js/window
+                                   "resize"
+                                   resize-handler
+                                   false)
+                (assoc state ::key-handler key-handler
+                             ::resize-handler resize-handler))
    :will-unmount (fn [state]
                    (.removeEventListener js/document
                      "keydown"
                      (::key-handler state)
-                     false))})
+                     false)
+                   (.removeEventListener js/document
+                      "resize"
+                      (::resize-handler state)
+                      false))})
 
 (rum/defc app < rum/reactive pres-listener-mixin
   []
-  (let [{:keys [phase config current error parts]} (rum/react app-state)
+  (let [{:keys [phase config current error parts resize]} (rum/react app-state)
         pages (or-config config [:pages])
         config (assoc config :page (inc current) :total-pages (count pages))
         page (if (= :loaded phase)
                (nth pages current)
                {})]
-    [:div.fill.pres
+    [:div.fill
      (case phase
        :loading (loading)
        :error (err error)
-       :loaded (loaded page config parts))]))
+       :loaded (loaded page config parts resize))]))
 
 (rum/mount (app) (. js/document (getElementById "app")))
 

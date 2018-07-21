@@ -131,11 +131,7 @@ header, footer, aside {
     transition: background .3s ease-in-out;
 }
 
-.pres {
-    transform-origin: top left;
-}
-
-.root, .header-wrapper, .footer-wrapper, .left-wrapper, .right-wrapper {
+.root {
     display: grid;
     justify-items: stretch;
     justify-content: stretch;
@@ -176,22 +172,8 @@ header, footer, aside {
     grid-area: header;
 }
 
-header {
-    grid-row: 2;
-    width: 100%;
-    margin: auto auto 0 auto;
-    position: relative;
-}
-
 .footer-wrapper {
     grid-area: footer;
-}
-
-footer {
-    grid-row: 1;
-    width: 100%;
-    margin: 0 auto auto auto;
-    position: relative;
 }
 
 .left-wrapper {
@@ -202,23 +184,33 @@ footer {
     grid-area: right;
 }
 
-aside {
-    width: 100%;
-    height: 100%;
+main {
+    grid-area: main;
+}
+
+.trans {
+    transform-origin: top left;
     position: relative;
+    font-size: 1000px;
+}
+
+header {
+    grid-row: 2 / 3;
+}
+
+
+footer {
+    grid-row: 4 / 5;
 }
 
 .left {
-    grid-column: 2;
+   grid-column: 2 / 3;
 }
 
 .right {
-    grid-column-start: 1;
+   grid-column: 4 / 5;
 }
 
-main {
-    position: relative;
-}
 
 h1, h2, h3, h4, h5, h6 {
     width: 90%;
@@ -232,21 +224,22 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
  font-weight: 800;
- font-size: 8%;
+ font-size: 14%;
 }
 
 h2 {
   font-weight: 700;
-  font-size: 6%;
+  font-size: 11%;
 }
 
-h3, h4, h5 {
+h3 {
   font-weight: 700;
-  font-size: 5%;
+  font-size: 8%;
 }
 
 h4, h5 {
-  font-size: 5%;
+  font-weight: 700;
+  font-size: 6%;
 }
 
 img {
@@ -257,13 +250,13 @@ img {
   position: absolute;
   text-overflow: "";
   text-align: justify;
-  font-size: 4%;
+  font-size: 6%;
   width: 90%;
 }
 
 pre {
   position: absolute;
-  font-size: 3%;
+  font-size: 5%;
   font-family: monospace;
   background-color: #363636;
   color: white;
@@ -272,7 +265,7 @@ pre {
 
 .page-number {
   position: absolute;
-  font-size: 2%;
+  font-size: 3%;
   bottom: 1%;
   right: 1%;
 }
@@ -293,7 +286,7 @@ a {
 ol, ul {
     list-style-position: inside;
     position: absolute;
-    font-size: 4%;
+    font-size: 6%;
 }
 
 ul {
