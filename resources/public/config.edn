@@ -99,9 +99,11 @@
                       :top "22%"
                       :width "40%"
                       :height "65%"}
-                     {:section [{:title "Another section with a title"
+                     {:section [{:title "Another section, with borders"
                                  :level 3}]
-                      :background-color "#777"
+                      :border-color "#777"
+                      :border 1
+                      :border-radius 2
                       :left "55%"
                       :top "22%"
                       :width "40%"

@@ -97,6 +97,9 @@
       (some? (:right content)) (dissoc :left)
       true (merge content))))
 
+(defn percent-to-px
+  [percent]
+  (str (* percent draw-height 0.01) "px"))
 ; config spec
 
 (defmulti content-spec component-type)
@@ -589,18 +592,16 @@
   [content config part]
   (let [content (or-default content config :section)
         contents (:section content)
-        {:keys [border border-color background-color]} content
+        {:keys [border border-color border-radius]} content
         parts (:children part)
-        style (-> content
-                  (dissoc :section :border :border-color :background-color)
-                  (assoc :background-color border-color))]
-    [:div.outer-section {:style style}
-     [:div.inner-section {:style {:top (str border "%")
-                                  :left (str border "%")
-                                  :width (str (- 100 (* 2 border)) "%")
-                                  :height (str (- 100 (* 2 border)) "%")
-                                  :background-color background-color}}
-      (components contents config parts)]]))
+        style (cond-> content
+                  true (dissoc :section :border :border-color :border-radius)
+                  (some? border-color) (assoc :border-color border-color)
+                  (some? border-radius) (assoc :border-radius (percent-to-px border-radius))
+                  (some? border) (assoc :border-width (percent-to-px border)
+                                        :border-style "solid"))]
+    [:div.section {:style style}
+     (components contents config parts)]))
 
 (rum/defc fragments < rum/static
   [content config part]
