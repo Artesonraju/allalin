@@ -391,18 +391,6 @@
   (when (not (s/valid? ::config config))
     (throw #js {:message (build-explain (s/explain-data ::config config))})))
 
-(defn update-scale
-  [state]
-  (let [window-height (.-innerHeight js/window)
-        window-width (.-innerWidth js/window)
-        screen-ratio (or-config (:config state) [:screen-ratio])
-        window-ratio (/ window-height window-width)
-        scale (if (> screen-ratio window-ratio)
-                (/ window-height draw-height)
-                (/ window-width (/ draw-height screen-ratio)))]
-    (assoc state :resize {:scale scale
-                          :window-ratio window-ratio})))
-
 (defn init-config [config]
   (valid-config config)
   (swap! app-state
@@ -417,8 +405,7 @@
             (assoc :config config
                    :phase :loaded
                    :current index
-                   :parts parts)
-            (update-scale)))))
+                   :parts parts)))))
   (set! (. js/document -title) (or-config config [:title])))
 
 (defn fetch-error [r]
@@ -696,7 +683,6 @@
         footer-height (or-config page config [:footer :height])
         height (- 100 (if has-header 0 header-height) (if has-footer 0 footer-height))
         contents (when (> width 0) (or-config page config [:left :contents]))]
-    (println footer-left)
     [:aside.left {:style {:grid-row-start (if has-header 2 3)
                           :grid-row-end (if has-footer 5 4)
                           :min-width (str width "vw")
@@ -767,20 +753,41 @@
                               :background-size "cover"
                               :background-position bg-position))))
 
-(rum/defc loaded < rum/static
-  [page config parts resize]
-  (let [{:keys [scale window-ratio]} resize
-        style (loaded-style page config)
-        header-height (or-config page config [:header :height])
-        left-width (or-config page config [:left :width])
-        footer-height (or-config page config [:footer :height])
-        right-width (or-config page config [:right :width])
+(def size-listener-mixin
+  { :did-mount    (fn [state]
+                    (let [comp      (:rum/react-component state)
+                          resize-handler #(rum/request-render comp)]
+                      (.addEventListener js/window
+                                         "resize"
+                                         resize-handler
+                                         false)
+                      (assoc state ::resize-handler resize-handler)))
+   :will-unmount (fn [state]
+                   (.removeEventListener js/document
+                                         "resize"
+                                         (::resize-handler state)
+                                         false)
+                   (dissoc state ::resize-handler))})
+
+(rum/defc loaded < size-listener-mixin
+  [page config parts]
+  (let [style (loaded-style page config)
         header-left (corner-area :header :left page config)
         header-right (corner-area :header :right page config)
         footer-left (corner-area :footer :left page config)
         footer-right (corner-area :footer :right page config)
+        window-height (.-innerHeight js/window)
+        window-width (.-innerWidth js/window)
         screen-ratio (or-config config [:screen-ratio])
+        window-ratio (/ window-height window-width)
         higher? (> window-ratio screen-ratio)
+        scale (if (> screen-ratio window-ratio)
+                (/ window-height draw-height)
+                (/ window-width (/ draw-height screen-ratio)))
+        header-height (or-config page config [:header :height])
+        left-width (or-config page config [:left :width])
+        footer-height (or-config page config [:footer :height])
+        right-width (or-config page config [:right :width])
         main-height (- 100 header-height footer-height)
         main-width (- 100 left-width right-width)
         grid {:grid-template-rows (if higher?
@@ -806,7 +813,7 @@
                                         "'" (string/join " " (map name [:left :left :main :right :right])) "'\n"
                                         "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'\n"
                                         "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'")}]
-   [:div.root..bg-ease.fill {:style (merge style grid)}
+   [:div.root.bg-ease.fill {:style (merge style grid)}
     (runner-wrapper :header page config)
     (aside-wrapper :left page config)
     (aside-wrapper :right page config)
@@ -816,7 +823,6 @@
     (left page config scale header-left footer-left)
     (footer page config scale footer-left footer-right)
     (right page config scale header-right footer-right)]))
-
 
 (rum/defc loading < rum/static
   []
@@ -836,35 +842,22 @@
 
 (defonce _ (load-conf))
 
-(defn resize-handler
-  []
-  (swap! app-state update-scale))
-
 (def pres-listener-mixin
   {:did-mount (fn [state]
                 (.addEventListener js/document
                   "keydown"
                   key-handler
                   false)
-                (.addEventListener js/window
-                                   "resize"
-                                   resize-handler
-                                   false)
-                (assoc state ::key-handler key-handler
-                             ::resize-handler resize-handler))
+                (assoc state ::key-handler key-handler))
    :will-unmount (fn [state]
                    (.removeEventListener js/document
                      "keydown"
                      (::key-handler state)
-                     false)
-                   (.removeEventListener js/document
-                      "resize"
-                      (::resize-handler state)
-                      false))})
+                     false))})
 
 (rum/defc app < rum/reactive pres-listener-mixin
   []
-  (let [{:keys [phase config current error parts resize]} (rum/react app-state)
+  (let [{:keys [phase config current error parts]} (rum/react app-state)
         pages (or-config config [:pages])
         config (assoc config :page (inc current) :total-pages (count pages))
         page (if (= :loaded phase)
@@ -874,7 +867,7 @@
      (case phase
        :loading (loading)
        :error (err error)
-       :loaded (loaded page config parts resize))]))
+       :loaded (loaded page config parts))]))
 
 (rum/mount (app) (. js/document (getElementById "app")))
 
