@@ -4,6 +4,9 @@
  :background-color "#212121"
  :color "#ddd"
  :background-position "center"
+ :progress-bar {:position :left
+                :width 0.5
+                :color "#0871a1"}
  :left {:background-color "#ddd"
         :color "#444"
         :width 5

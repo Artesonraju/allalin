@@ -59,6 +59,7 @@
 (def all-components (into simple-components complex-components))
 
 (def draw-height 1000)
+(def swipe-sensitive 50)
 
 ; helpers
 
@@ -730,6 +731,30 @@
     [:div.bg-ease {:class (str (name key-position) "-wrapper")
                    :style style}]))
 
+(rum/defc progress-bar
+  [config scale]
+  (let [position (or-config config [:progress-bar :position])
+        width (or-config config [:progress-bar :width])]
+    (when (and (some? position) (> width 0))
+      (let [{:keys [total-pages page]} config
+            vertical? (contains? #{:left :right} position)
+            length (/ page total-pages)
+            ratio (or-config config [:screen-ratio])
+            color (or-config config [:progress-bar :color])
+            style (merge {:background-color color
+                          position 0}
+                         (if vertical? {:width (* (/ width 100) (/ draw-height ratio))
+                                        :height (str (* 100 length) "%")
+                                        :transform (str "scale(" scale ", 1)")
+                                        :transform-origin (str "top " (name position));
+                                        :top 0}
+                                       {:width (str (* 100 length) "%")
+                                        :height (* (/ width 100) draw-height)
+                                        :transform (str "scale(1, " scale ")")
+                                        :transform-origin (str (name position) " left");
+                                        :left 0}))]
+        [:div.progress {:style style}]))))
+
 ; phase components
 
 (defn corner-area
@@ -754,9 +779,47 @@
                               :background-size "cover"
                               :background-position bg-position))))
 
+(def touch-position (atom {}))
+
+(defn x-touch [event]
+  (-> event
+      (.-changedTouches)
+      (aget 0)
+      (.-screenX)))
+
+(def touch-listener-mixin
+  {:did-mount (fn [state]
+                (let [start-handler #(swap! touch-position assoc :x (x-touch %))
+                      end-handler (fn [e]
+                                    (let [x (x-touch e)
+                                          x-start (:x @touch-position)]
+                                      (cond
+                                        (> x (+ x-start swipe-sensitive)) (go-next)
+                                        (< x (- x-start swipe-sensitive)) (go-previous))))]
+                  (.addEventListener js/document
+                                     "touchstart"
+                                     start-handler
+                                     false)
+                  (.addEventListener js/document
+                                     "touchend"
+                                     end-handler
+                                     false)
+                  (assoc state ::key-handler key-handler
+                               ::touchstart-handler start-handler
+                               ::touchend-handler end-handler)))
+   :will-unmount (fn [state]
+                   (.removeEventListener js/document
+                                         "touchstart"
+                                         (::touchstart-handler state)
+                                         false)
+                   (.removeEventListener js/document
+                                         "touchend"
+                                         (::touchend-handler state)
+                                         false))})
+
 (def size-listener-mixin
   { :did-mount    (fn [state]
-                    (let [comp      (:rum/react-component state)
+                    (let [comp (:rum/react-component state)
                           resize-handler #(rum/request-render comp)]
                       (.addEventListener js/window
                                          "resize"
@@ -770,7 +833,7 @@
                                          false)
                    (dissoc state ::resize-handler))})
 
-(rum/defc loaded < size-listener-mixin
+(rum/defc loaded < size-listener-mixin touch-listener-mixin
   [page config parts]
   (let [style (loaded-style page config)
         header-left (corner-area :header :left page config)
@@ -823,7 +886,8 @@
     (header page config scale header-left header-right)
     (left page config scale header-left footer-left)
     (footer page config scale footer-left footer-right)
-    (right page config scale header-right footer-right)]))
+    (right page config scale header-right footer-right)
+    (progress-bar config scale)]))
 
 (rum/defc loading < rum/static
   []

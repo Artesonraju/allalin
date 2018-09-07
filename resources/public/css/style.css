@@ -276,6 +276,11 @@ pre {
     box-sizing: border-box;
 }
 
+.progress {
+    position: absolute;
+    z-index: 1;
+}
+
 a {
     cursor: pointer;
 }
