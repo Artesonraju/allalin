@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 rm allalin.zip
 rm -rf ./docs
 lein do clean, fig:min

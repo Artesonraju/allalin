@@ -131,7 +131,7 @@
     (when (and (some? side) (> width 0))
       (let [{:keys [current total]} (:counts position)
             vertical? (contains? #{:left :right} side)
-            length (/ current total)
+            length (/ current (dec total))
             ratio (:screen-ratio config)
             style (merge {:background-color color
                           side 0}
