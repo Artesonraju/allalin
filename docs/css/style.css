@@ -128,12 +128,14 @@ header, footer, aside {
 }
 
 .bg-ease {
-    transition: flex-basis .3s ease-in-out, background .3s ease-in-out;
+    transition: background .3s ease-in-out;
 }
 
 .root {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    justify-items: stretch;
+    justify-content: stretch;
+
 }
 
 .abnormal {
@@ -167,83 +169,73 @@ header, footer, aside {
 }
 
 .header-wrapper {
-    flex-grow: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-header {
-    width: 100%;
-    margin: auto auto 0 auto;
-    position: relative;
+    grid-area: header;
 }
 
 .footer-wrapper {
-    flex-grow: 1;
+    grid-area: footer;
 }
 
-footer {
-    width: 100%;
-    margin: 0 auto auto auto;
-    position: relative;
+.left-wrapper {
+    grid-area: left;
 }
 
-.middle {
-    flex-grow: 0;
-    display: flex;
-}
-
-.aside-wrapper {
-    flex-grow: 1;
-}
-
-aside {
-    width: 100%;
-    height: 100%;
-    position: relative;
-}
-
-aside.left {
-    margin-left: auto;
-}
-
-aside.right {
-    margin-right: auto;
+.right-wrapper {
+    grid-area: right;
 }
 
 main {
-    flex-grow: 0;
-    flex-basis: 90%;
+    grid-area: main;
+}
+
+.trans {
+    transform-origin: top left;
     position: relative;
+    font-size: 1000px;
+}
+
+header {
+    grid-row: 2 / 3;
+}
+
+footer {
+    grid-row: 4 / 5;
+}
+
+.left {
+   grid-column: 2 / 3;
+}
+
+.right {
+   grid-column: 4 / 5;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    width: 90%;
     hyphens: auto;
     overflow-wrap: break-word;
     position: absolute;
     text-transform: uppercase;
     text-align: center;
-
 }
 
 h1 {
  font-weight: 800;
- font-size: 8%;
+ font-size: 14%;
 }
 
 h2 {
   font-weight: 700;
-  font-size: 6%;
+  font-size: 11%;
 }
 
-h3, h4, h5 {
+h3 {
   font-weight: 700;
-  font-size: 5%;
+  font-size: 8%;
 }
 
 h4, h5 {
-  font-size: 5%;
+  font-weight: 700;
+  font-size: 6%;
 }
 
 img {
@@ -254,46 +246,37 @@ img {
   position: absolute;
   text-overflow: "";
   text-align: justify;
-  word-break: break-word;
-  font-size: 4%;
-  width: 90%;
 }
 
-pre {
+pre.code {
   position: absolute;
-  font-size: 3%;
   font-family: monospace;
-  background-color: #363636;
-  color: white;
-  padding: 1%;
 }
 
 .page-number {
   position: absolute;
-  font-size: 2%;
-  bottom: 1%;
-  right: 1%;
 }
 
-.outer-section {
+.section {
     position: absolute;
+    overflow: hidden;
+    box-sizing: border-box;
 }
 
-.inner-section {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    overflow: hidden
+.progress {
+    position: absolute;
+    z-index: 1;
 }
 
 a {
     cursor: pointer;
+    text-decoration: underline;
 }
 
 ol, ul {
     list-style-position: inside;
     position: absolute;
-    font-size: 4%;
+    font-size: 6%;
 }
 
 ul {

@@ -1,57 +1,95 @@
 {:screen-ratio 0.625 ; 4/3 => 0.75, 16/10 => 0.625, 16:9 => 0.5625
  ; :disable-reload true
  :title "Allalin - Presentation framework"
- :background-color "#212121"
  :color "#ddd"
+ :background-color "#212121"
  :background-position "center"
- :progress-bar {:position :left
+ :header-left :left
+ :header-right :right
+ :footer-left :left
+ :footer-right :right
+ :progress-bar {:side :left
                 :width 0.5
                 :color "#0871a1"}
+ :default {:title {:level 2
+                   :style {:top "5%"
+                           :left "5%"
+                           :width "90%"}}
+           :image {:style {:top "5%"
+                           :left "5%"
+                           :width "30%"}}
+           :text {:style {:top "5%"
+                          :left "5%"
+                          :width "90%"
+                          :font-size "6%"}}
+           :code {:style {:top "5%"
+                          :left "5%"
+                          :font-size "5%"
+                          :background-color "#363636"
+                          :color "white"
+                          :padding "1%"}}
+           :liste {:style {:top "5%"
+                           :left "5%"
+                           :width "90%"}}
+           :page-number {:style {:top "5%"
+                                 :left "5%"
+                                 :font-size "3%"}}
+           :section {:style {:top "5%"
+                             :left "5%"
+                             :border-style "solid"}}}
+ :header {:background-color "inherit"
+          :color "inherit"
+          :height 0
+          :children []}
+ :right {:background-color "inherit"
+         :color "inherit"
+         :width 0
+         :children []}
  :left {:background-color "#ddd"
         :color "#444"
         :width 5
-        :contents [{:image "allalin.svg"
-                    :top "1%"
-                    :left "10%"
-                    :width "80%"}
-                   {:page-number :total
-                    :font-size "2%"
-                    :bottom "1%"
-                    :right "10%"}]}
+        :children [#image{:src "allalin.svg"
+                          :style {:top "1%"
+                                  :left "10%"
+                                  :width "80%"}}
+                   #pagenumber{:total? true
+                               :style {:font-size "2%"
+                                       :bottom "1%"
+                                       :right "10%"}}]}
  :footer {:background-color "#0871a1"
           :color "#eee"
-          :height 10
-          :contents [{:text ["Allalin Presentation Framework - "
-                             {:string "Github repo"
-                              :transform [:underlined]
-                              :link "https://github.com/Artesonraju/allalin"
-                              :color "#fff"}]
-                      :font-size "3%"
-                      :top "15%"
-                      :left "50%"
-                      :width "50%"}]}
+          :height 6
+          :children [#text{:content ["Allalin Presentation Framework - "
+                                     {:string "Github repo"
+                                      :transform [:underlined]
+                                      :link "https://github.com/Artesonraju/allalin"
+                                      :color "#fff"}]
+                           :style {:font-size "3%"
+                                   :top "15%"
+                                   :left "50%"
+                                   :width "50%"}}]}
 
- :pages [{:contents [{:title "Allalin Presentation Framework"
-                      :level 1
-                      :top "15%"}
-                     {:title "built with Clojurescript, Rum and Figwheel"
-                      :level 5
-                      :font-size "3%";
-                      :top "65%"}
-                     {:text "(Use arrows to navigate through the slides)"
-                      :font-size "2%"
-                      :left "47%"
-                      :top "80%"}]}
+ :pages [{:children [#title{:content "Allalin Presentation Framework"
+                            :level 1
+                            :style {:top "15%"}}
+                     #title{:content "built with Clojurescript, Rum and Figwheel"
+                            :level 5
+                            :style {:font-size "4%"
+                                    :top "65%"}}
+                     #text{:content "(Use arrows to navigate through the slides)"
+                           :style {:font-size "3.5%"
+                                   :left "47%"
+                                   :top "80%"}}]}
 
-         {:contents [{:title "Allalin allows to create HTML slide decks that are interactive and responsive"
-                      :level 3
-                      :top "35%"}]}
+         {:children [#title{:content "Allalin allows to create HTML slide decks that are interactive and responsive"
+                            :level 3
+                            :style {:top "35%"}}]}
 
-         {:contents [{:title "Configuration"}
-                     {:text "Allalin presentations are configured through an edn file (config.edn) where the different properties, pages and components are defined."
-                      :top "25%"}
-                     {:text "This presentation aims at giving exemples to help build a custom one."
-                      :top "60%"}]}
+         {:children [#title{:content "Configuration"}
+                     #text{:content "Allalin presentations are configured through an edn file (config.edn) where the different properties, pages and components are defined."
+                           :style {:top "25%"}}
+                     #text{:content "This presentation aims at giving exemples to help build a custom one."
+                           :style {:top "60%"}}]}
 
          {:background-image "back-image.jpg"
           :background-color "#32558d"
@@ -62,102 +100,99 @@
           :right {:background-color "#ddd"
                   :color "#444"
                   :width 20
-                  :contents [{:image "allalin.svg"
-                              :top "1%"
-                              :left "3%"
-                              :width "20%"}]}
+                  :contents [#image{:src "allalin.svg"
+                                    :style {:top "1%"
+                                            :left "3%"
+                                            :width "20%"}}]}
           :footer {:height 0
                    :background-color "#212121"}
-          :contents [{:title "Page layout"}
-                     {:text "Header, footer, asides and background are defined globally but can be overriden at page level."
-                      :top "17%"}]}
+          :children [#title{:content "Page layout"}
+                     #text{:content "Header, footer, asides and background are defined globally but can be overriden at page level."
+                           :style {:top "17%"}}]}
 
-         {:contents [{:title "Basic components"}
-                     {:text ["Some text, "
-                             {:string "some colored italic text"
-                              :transform [:italic]
-                              :color "#0871a1"}]
-                      :top "22%"}
-                     {:text {:string "A link to the previous page"
-                             :link "1"}
-                      :top "35%"}
-                     {:text {:string "A link to the the github repo"
-                             :link "https://github.com/Artesonraju/allalin"}
-                      :top "45%"}
-                     {:code ";Some lisp code
+         {:children [#title{:content "Basic components"}
+                     #text{:content ["Some text, "
+                                     {:string "some colored italic text"
+                                      :transform [:italic]
+                                      :color "#0871a1"}]
+                           :style {:top "22%"}}
+                     #text{:content {:string "A link to the previous page"
+                                     :link 1}
+                           :style {:top "35%"}}
+                     #text{:content {:string "A link to the the github repo"
+                                     :link "https://github.com/Artesonraju/allalin"}
+                           :style {:top "45%"}}
+                     #code{:content ";Some lisp code
     (into [] :a 1) {:x 1}"
-                      :top "60%"
-                      :width "80%"}
-                     {:image "an-image.png"
-                      :top "80%"
-                      :width "20%"}]}
+                           :style {:top "60%"
+                                   :width "80%"}}
+                     #image{:src "an-image.png"
+                            :style {:top "80%"
+                                    :width "20%"}}]}
+         {:children [#title{:content "Sections"}
+                     #section{:children [#text {:content "A section with some big text"
+                                                :style {:font-size "7%"
+                                                        :width "90%"}}]
+                              :style {:background-color "#eee"
+                                      :color "#222"
+                                      :top "22%"
+                                      :width "40%"
+                                      :height "65%"}}
+                     #section{:children [#title {:content "Another section, with borders"
+                                                 :level 3}]
+                              :style {:border-color "#777"
+                                      :border-width "1rem"
+                                      :border-radius "3rem"
+                                      :left "55%"
+                                      :top "22%"
+                                      :width "40%"
+                                      :height "65%"}}]}
+         {:children [#title{:content "Fragments and Steps"}
+                     #section{:children [#fragments{:children [#text{:content "Hit right arrow..."
+                                                                     :style {:top "20%"
+                                                                             :left "10%"}}
+                                                               #text{:content "...to display ..."
+                                                                     :style {:top "40%"
+                                                                             :left "10%"}}
+                                                               #text{:content "the fragments"
+                                                                     :style {:top "60%"
+                                                                             :left "10%"}}]}]
+                              :style {:top "22%"
+                                      :width "45%"
+                                      :height "65%"}}
+                     #section{:children [#steps{:children [#text{:content []}
+                                                           #text{:content "Hit right arrow..."
+                                                                 :style {:top "40%"
+                                                                         :left "10%"}}
+                                                           #text{:content "...to display ..."
+                                                                 :style {:top "60%"
+                                                                         :left "10%"}}
+                                                           #text{:content "the steps one after another"
+                                                                 :style {:top "20%"
+                                                                         :left "10%"}}]}]
+                              :style {:left "55%"
+                                      :top "22%"
+                                      :width "45%"
+                                      :height "65%"}}]}
 
+         {:children [#title{:content "Lists"}
+                     #liste{:type :numbered
+                            :points [["A numbered"] ["list"]]
+                            :style {:top "20%"}}
+                     #liste{:type :bullet
+                            :points [["A bulleted"] ["list"]]
+                            :style {:top "50%"}}
+                     #liste{:type :bullet
+                            :fragmented? true
+                            :points [["A fragmented"] ["list !"]]
+                            :style {:top "80%"}}]}
 
-         {:contents [{:title "Sections"}
-                     {:section [{:text "A section with some big text"
-                                 :font-size "7%"
-                                 :width "90%"}]
-                      :background-color "#eee"
-                      :color "#222"
-                      :top "22%"
-                      :width "40%"
-                      :height "65%"}
-                     {:section [{:title "Another section, with borders"
-                                 :level 3}]
-                      :border-color "#777"
-                      :border 1
-                      :border-radius 2
-                      :left "55%"
-                      :top "22%"
-                      :width "40%"
-                      :height "65%"}]}
-
-         {:contents [{:title "Fragments and Steps"}
-                     {:section [{:fragments [{:text "Hit right arrow..."
-                                              :top "20%"
-                                              :left "10%"}
-                                             {:text "...to display ..."
-                                              :top "40%"
-                                              :left "10%"}
-                                             {:text "the fragments"
-                                              :top "60%"
-                                              :left "10%"}]}]
-                      :top "22%"
-                      :width "45%"
-                      :height "65%"}
-                     {:section [{:steps [{:text []}
-                                         {:text "Hit right arrow..."
-                                          :top "40%"
-                                          :left "10%"}
-                                         {:text "...to display ..."
-                                          :top "60%"
-                                          :left "10%"}
-                                         {:text "the steps one after another"
-                                          :top "20%"
-                                          :left "10%"}]}]
-                      :left "55%"
-                      :top "22%"
-                      :width "45%"
-                      :height "65%"}]}
-
-         {:contents [{:title "Lists"}
-                     {:list :numbered
-                      :contents ["A numbered" "list"]
-                      :top "20%"}
-                     {:list :bullet
-                      :contents ["A bulleted" "list"]
-                      :top "50%"}
-                     {:list :bullet
-                      :fragmented true
-                      :contents ["A fragmented" "list !"]
-                      :top "80%"}]}
-
-         {:contents [{:text "Thanks to all developers whose libraries were used."
-                      :top "25%"}
-                     {:text ["If you would like to contribute or fork the project, go to the "
-                             {:string "github repo"
-                              :color "#0e75a4"
-                              :transform [:underlined]
-                              :link "https://github.com/Artesonraju/allalin"}
-                             "."]
-                      :top "50%"}]}]}
+         {:children [#text{:content "Thanks to all developers whose libraries were used."
+                           :style {:top "25%"}}
+                     #text{:content ["If you would like to contribute or fork the project, go to the "
+                                     {:string "github repo"
+                                      :color "#0e75a4"
+                                      :transform [:underlined]
+                                      :link "https://github.com/Artesonraju/allalin"}
+                                     "."]
+                           :style {:top "50%"}}]}]}

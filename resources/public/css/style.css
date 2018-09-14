@@ -198,7 +198,6 @@ header {
     grid-row: 2 / 3;
 }
 
-
 footer {
     grid-row: 4 / 5;
 }
@@ -211,15 +210,12 @@ footer {
    grid-column: 4 / 5;
 }
 
-
 h1, h2, h3, h4, h5, h6 {
-    width: 90%;
     hyphens: auto;
     overflow-wrap: break-word;
     position: absolute;
     text-transform: uppercase;
     text-align: center;
-
 }
 
 h1 {
@@ -250,24 +246,15 @@ img {
   position: absolute;
   text-overflow: "";
   text-align: justify;
-  font-size: 6%;
-  width: 90%;
 }
 
-pre {
+pre.code {
   position: absolute;
-  font-size: 5%;
   font-family: monospace;
-  background-color: #363636;
-  color: white;
-  padding: 1%;
 }
 
 .page-number {
   position: absolute;
-  font-size: 3%;
-  bottom: 1%;
-  right: 1%;
 }
 
 .section {
@@ -283,6 +270,7 @@ pre {
 
 a {
     cursor: pointer;
+    text-decoration: underline;
 }
 
 ol, ul {

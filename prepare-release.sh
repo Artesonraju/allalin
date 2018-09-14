@@ -3,7 +3,7 @@
 rm allalin.zip
 rm -rf ./docs
 
-lein do clean, cljsbuild once min
+lein do clean, fig:min
 
 cd ./resources/public/
 zip -r ../../allalin.zip ./*
