@@ -7,7 +7,7 @@
     [allalin.component :as comp]))
 
 (def draw-height 1000)
-(def swipe-sensitive 50)
+(def swipe-sensitive 40)
 
 (def actions {:inner-link state/go-to-page!}) ; arg: number
 
@@ -167,31 +167,6 @@
       (aget 0)
       (.-screenX)))
 
-(defn key-handler
-  [key-event]
-  (condp contains? (.-key key-event)
-    #{"f" "F"} (state/go-start!)
-    #{"Backspace" "PageUp" "ArrowLeft" "ArrowUp" "p" "P"} (state/go-previous!)
-    #{"Enter" " " "PageDown" "ArrowRight" "ArrowDown" "n" "N"} (state/go-next!)
-    #{"End"} (state/go-end!)
-    ())) ; default : no-op
-
-(def key-listener-mixin
-  (letfn [(mount [state]
-            (.addEventListener js/document
-                               "keydown"
-                               key-handler
-                               false)
-            (assoc state ::key-handler key-handler))
-          (unmount [state]
-            (.removeEventListener js/document
-                                  "keydown"
-                                  (::key-handler state)
-                                  false)
-            (dissoc state ::key-handler))]
-    {:did-mount mount
-     :will-unmount unmount}))
-
 (def touch-listener-mixin
   {:did-mount (fn [state]
                 (let [start-handler #(swap! touch-position assoc :x (x-touch %))
@@ -199,8 +174,8 @@
                                     (let [x (x-touch e)
                                           x-start (:x @touch-position)]
                                       (cond
-                                        (> x (+ x-start swipe-sensitive)) (state/go-next!)
-                                        (< x (- x-start swipe-sensitive)) (state/go-previous!))))]
+                                        (< x (- x-start swipe-sensitive)) (state/go-next!)
+                                        (> x (+ x-start swipe-sensitive)) (state/go-previous!))))]
                   (.addEventListener js/document
                                      "touchstart"
                                      start-handler
@@ -251,7 +226,12 @@
                               :background-size "cover"
                               :background-position bg-position))))
 
-(rum/defc basic < size-listener-mixin touch-listener-mixin key-listener-mixin
+(def action-keys {state/go-start! ["Home"]
+                  state/go-next! ["Enter" " " "PageDown" "ArrowRight" "ArrowDown" "n" "N"]
+                  state/go-previous! ["Backspace" "PageUp" "ArrowLeft" "ArrowUp" "p" "P"]
+                  state/go-end! ["End"]})
+
+(rum/defc basic < size-listener-mixin touch-listener-mixin
   [config position]
   (let [{:keys [paging counts]} position
         {:keys [pages default]} config
