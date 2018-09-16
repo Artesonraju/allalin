@@ -25,7 +25,10 @@
             (assoc :config config
                    :mode (conf/mode config mode)
                    :phase :loaded
-                   :position (position/init-position config position))))))
+                   :position (position/init-position config position))
+            (as-> s (condp = (:mode s)
+                      :print (update s :position position/with-all-pages)
+                      s))))))
   ; return the new config
   (:config @app-state))
 
@@ -76,6 +79,10 @@
         (.then #(init-config! (read-config %)))
         (.catch (fn [err] (set-config-error! err))))))
 
+; basic commands
+(defn to-basic! []
+  (swap! app-state assoc :mode :basic))
+
 (defn go-start! []
   (swap! app-state update :position (partial position/nth-page-position 0)))
 
@@ -90,3 +97,19 @@
 
 (defn go-end! []
   (swap! app-state update :position position/last-position))
+
+; hidden commands
+(defn toggle-hide! []
+  (swap! app-state (fn [s]
+                     (assoc s :mode (or (:hidden s) :hidden)
+                              :hidden (or (:mode s) :basic)))))
+
+; print commands
+(defn to-print! []
+  (swap! app-state (fn [s]
+                     (-> s
+                         (assoc :mode :print)
+                         (update :position position/with-all-pages)))))
+
+(defn add-print-margin! [amount]
+  (swap! app-state update-in [:print :margin] #(max (+ % amount) 0)))

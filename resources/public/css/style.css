@@ -106,7 +106,6 @@ a {
 html, body {
     width: 100%;
     height: 100%;
-    overflow: hidden;
 }
 
 body {
@@ -135,7 +134,29 @@ header, footer, aside {
     display: grid;
     justify-items: stretch;
     justify-content: stretch;
+}
 
+.basic {
+    overflow: hidden;
+}
+
+.print {
+    overflow: hidden;
+}
+
+.print .page {
+    page-break-inside: avoid;
+}
+
+.print .root {
+    transform-origin: top left;
+    position: relative;
+    font-size: 1000px;
+    page-break-inside: avoid;
+}
+
+.curtain {
+    background: #111;
 }
 
 .abnormal {
@@ -191,7 +212,13 @@ main {
 .trans {
     transform-origin: top left;
     position: relative;
+    overflow: hidden;
     font-size: 1000px;
+}
+
+.print .trans {
+    min-width: 100%;
+    min-height: 100%;
 }
 
 header {
@@ -265,6 +292,8 @@ pre.code {
 
 .progress {
     position: absolute;
+    transition: width .3s ease-in-out;
+    transition: height .3s ease-in-out;
     z-index: 1;
 }
 

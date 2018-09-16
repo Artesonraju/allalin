@@ -12,11 +12,11 @@
 (s/def ::background-position string?)
 (s/def ::background-image string?)
 
-(def direction #{:top :left :right :bottom})
-(s/def ::header-left direction)
-(s/def ::header-right direction)
-(s/def ::footer-left direction)
-(s/def ::footer-right direction)
+(def around #{:header :left :right :footer})
+(s/def ::header-left around)
+(s/def ::header-right around)
+(s/def ::footer-left around)
+(s/def ::footer-right around)
 
 (s/def ::around (s/keys :opt-un [::contents
                                  ::color
@@ -42,7 +42,8 @@
                                ::background-image]))
 (s/def ::pages (s/coll-of ::page :min-count 1))
 
-(s/def ::side direction)
+(def side #{:top :left :right :bottom})
+(s/def ::side side)
 (s/def ::color string?)
 
 (s/def ::progress-bar
@@ -51,6 +52,10 @@
 (s/def ::title string?)
 (s/def ::screen-ratio (s/and number? #(> % 0) #(<= % 1)))
 (s/def ::disable-reaload boolean?)
+
+(s/def ::initial-mode #{:basic})
+
+(s/def ::default map?)
 
 (s/def ::config
   (s/keys :req-un [::pages
@@ -63,15 +68,17 @@
                    ::header
                    ::footer
                    ::left
-                   ::right]
+                   ::right
+                   ::default]
           :opt-un [::progress-bar
                    ::disable-reaload
                    ::background-image
                    ::background-color
-                   ::background-position]))
+                   ::background-position
+                   ::initial-mode]))
 
-(defn mode [config old]
-  (or (:mode old) (:initial-mode config) :basic))
+(defn mode [config old-mode]
+  (or old-mode (:initial-mode config) :basic))
 
 (defn valid [config]
   (s/valid? ::config config))

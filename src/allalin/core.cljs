@@ -1,9 +1,12 @@
 (ns ^:figwheel-hooks allalin.core
   (:require
    [goog.dom :as gdom]
+   [goog.dom.fullscreen :as fs]
    [rum.core :as rum]
    [allalin.state :as state]
-   [allalin.mode.basic :as basic]))
+   [allalin.mode.basic :as basic]
+   [allalin.mode.hidden :as hidden]
+   [allalin.mode.print :as print]))
 
 (defn get-app-element []
   (gdom/getElement "app"))
@@ -11,25 +14,16 @@
 (defonce _ (state/load-conf!))
 
 (defn toggle-fullscreen []
-  (let [d js/document
-        e (.-documentElement d)]
-    (if (some some? [(.-fullscreenElement d)
-                     (.-webkitFullscreenElement d)
-                     (.-mozFullScreenElement d)
-                     (.-msFullscreenElement d)])
-      (cond
-        (some? d.exitFullscreen) (.exitFullscreen d)
-        (some? d.webkitExitFullscreen) (.webkitExitFullscreen d)
-        (some? d.mozCancelFullScreen) (.mozCancelFullScreen d)
-        (some? d.msExitFullscreen) (.msExitFullscreen d))
-      (cond
-        (some? e.requestFullscreen) (.requestFullscreen e)
-        (some? e.webkitRequestFullscreen) (.webkitRequestFullscreen e)
-        (some? e.mozRequestFullScreen) (.mozRequestFullScreen e)
-        (some? e.msRequestFullscreen) (.msRequestFullscreen e)))))
+  (when (fs/isSupported)
+    (if (fs/isFullScreen)
+      (fs/exitFullScreen)
+      (fs/requestFullScreen (get-app-element)))))
 
 (def action-keys {state/load-conf! ["r" "R"]
-                  toggle-fullscreen ["f" "F"]})
+                  toggle-fullscreen ["f" "F"]
+                  state/toggle-hide! ["h" "H"]
+                  state/to-print! ["p" "P"]
+                  state/to-basic! ["s" "S"]})
 
 (defn to-key-map [action-keys]
   (reduce (fn [acc [action keys]]
@@ -43,6 +37,9 @@
 (def keymaps
   (let [key-action (to-key-map action-keys)]
     {:basic (merge (to-key-map basic/action-keys)
+                   key-action)
+     :hidden key-action
+     :print (merge (to-key-map print/action-keys)
                    key-action)}))
 
 (defn key-handler
@@ -68,9 +65,11 @@
      :will-unmount unmount}))
 
 (rum/defc loaded < rum/static
-  [config mode position]
+  [config mode position print]
   (case mode
-    :basic (basic/basic config position)))
+    :basic (basic/basic config position)
+    :hidden (hidden/hidden)
+    :print (print/print- config position print)))
 
 (rum/defc loading < rum/static
   []
@@ -88,12 +87,12 @@
 
 (rum/defc app < rum/reactive key-listener-mixin
   []
-  (let [{:keys [error phase config mode position]} (rum/react state/app-state)]
+  (let [{:keys [error phase config mode position print]} (rum/react state/app-state)]
     [:div.fill
      (case phase
        :loading (loading)
        :error (err error)
-       :loaded (loaded config mode position))]))
+       :loaded (loaded config mode position print))]))
 
 (defn mount [el]
   (rum/mount (app) el))

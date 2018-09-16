@@ -86,7 +86,7 @@
   (reduce-indexed (fn [acc index new-part]
                     (let [old-part (nth old-parts index)
                           {old-current :current old-children :children} old-part
-                          {new-children :children new-length :length} old-part]
+                          {new-length :length} old-part]
                       (if (or (nil? old-part)
                               (>= index (count new-parts)))
                         (conj acc (to-first-part new-part))
@@ -128,3 +128,9 @@
   [config old-position]
   (let [pages (:pages config)]
     (build-position pages old-position)))
+
+(defn with-all-pages [position]
+  (assoc position :all-paging
+    (mapv (fn [parts]
+            (mapv to-last-part parts))
+          (:paging position))))
