@@ -14,11 +14,12 @@
                   (partial state/add-print-margin! (- margin-step)) ["-"]})
 
 (rum/defc main < rum/static
-  [page pagings props]
-  (let [components (:children page)]
+  [page part props]
+  (let [components (:children page)
+        point {:part part :stock (dec (:moves part))}]
     [:main
      [:div.trans
-      (comp/render-children components pagings props)]]))
+      (comp/render-children components point props)]]))
 
 (rum/defc header < rum/static
   [page config props]
@@ -61,7 +62,7 @@
       (comp/render-children components nil props)]]))
 
 (rum/defc slide < s/size-listener-mixin
-  [page config pagings props margin]
+  [page config part props margin]
   (let [style (s/basic-style page config)
         header-left (s/corner-area :header :left page config)
         header-right (s/corner-area :header :right page config)
@@ -91,7 +92,7 @@
                    :max-height (* print-width screen-ratio)
                    :margin-top (str margin "px")}}
      [:div.root.fill {:style (merge style grid)}
-      (main page pagings props)
+      (main page part props)
       (header page config props)
       (left page config props)
       (footer page config props)
@@ -100,17 +101,16 @@
 
 (rum/defc print- < rum/static
   [config position print]
-  (let [{:keys [all-paging counts]} position
+  (let [{:keys [counts parts]} position
         {:keys [pages default]} config
         margin (or (:margin print) 0)
         margin-fn (fn [i] (if (pos? i) margin 0))]
     [:div.print
      (map-indexed
        (fn [index page]
-         (let [paging (nth all-paging index)
-               props {:default default :counts (assoc counts :current index)}]
+         (let [props {:default default :counts (assoc counts :current index)}]
            (rum/with-key
-             (slide page config paging props (margin-fn index))
+             (slide page config (nth parts index) props (margin-fn index))
              (str index))))
        pages)]))
 

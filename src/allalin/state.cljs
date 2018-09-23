@@ -6,15 +6,29 @@
     [allalin.config :as conf]
     [allalin.component :as comp]))
 
+; state
 (defonce app-state (atom {:phase :loading
                           :config nil
+                          :config-hash nil
                           :position nil
+                          :channel nil
                           :mode nil}))
 
 (defn reload! []
   (when (not (get-in @app-state [:config :disable-reload]))
     (swap! app-state assoc :phase :loading)
     true))
+
+(defn synchro
+  [state]
+  (let [{:keys [config config-hash channel]} state
+        h (hash config)]
+    (if (or (not (:synchro config)) (= h config-hash) (not js/BroadcastChannel))
+      (assoc state :channel nil)
+      (do
+        (when (some? channel) (.close channel))
+        (assoc state :config-hash h
+                     :channel (js/BroadcastChannel. (str h)))))))
 
 (defn build-config! [config]
   (swap! app-state
@@ -26,11 +40,7 @@
                    :mode (conf/mode config mode)
                    :phase :loaded
                    :position (position/init-position config position))
-            (as-> s (condp = (:mode s)
-                      :print (update s :position position/with-all-pages)
-                      s))))))
-  ; return the new config
-  (:config @app-state))
+            (synchro))))))
 
 (defn preload-images!
   [images]
@@ -48,12 +58,41 @@
   [s]
   (reader/read-string {:readers comp/edn-readers} s))
 
+(defn post
+  [state]
+  (let [{:keys [position channel]} state
+        {:keys [current stock]} (:counts position)]
+    (when (some? channel)
+      (.postMessage channel (clj->js {:current current
+                                      :stock stock})))))
+
+(defn message-handler
+  [event]
+  (let [{:keys [request current stock]} (js->clj (.-data event) :keywordize-keys true)]
+    (if request
+      (post @app-state)
+      (swap! app-state
+        (fn [state]
+          (let [counts (-> state :position :counts)]
+            (if (and (= current (:current counts)) (stock (:stock counts)))
+              state
+              (update state :position #(position/nth-position current stock %)))))))))
+
+
+(defn init-channel!
+  [state]
+  (let [channel (:channel state)]
+    (when channel
+      (set! (.-onmessage channel) message-handler)
+      (.postMessage channel (clj->js {:request true})))))
+
 (defn init-config! [config]
   (when (not (conf/valid config))
     (throw #js {:message (explain (conf/problems config))}))
-  (let [config (build-config! config)]
+  (let [{:keys [config] :as state} (build-config! config)]
     (preload-images! (conf/images config))
-    (set! (. js/document -title) (:title config))))
+    (set! (. js/document -title) (:title config))
+    (init-channel! state)))
 
 (defn fetch-error [res]
   (js/Error. (str "Unable to load config.edn (" (.-status res)
@@ -84,19 +123,19 @@
   (swap! app-state assoc :mode :basic))
 
 (defn go-start! []
-  (swap! app-state update :position (partial position/nth-page-position 0)))
+  (post (swap! app-state update :position (partial position/nth-position 0))))
 
 (defn go-to-page! [index]
-  (swap! app-state update :position (partial position/nth-page-position index)))
+  (post (swap! app-state update :position (partial position/nth-position index))))
 
 (defn go-previous! []
-  (swap! app-state update :position position/dec-position))
+  (post (swap! app-state update :position position/dec-position)))
 
 (defn go-next! []
-  (swap! app-state update :position position/inc-position))
+  (post (swap! app-state update :position position/inc-position)))
 
 (defn go-end! []
-  (swap! app-state update :position position/last-position))
+  (post (swap! app-state update :position position/last-position)))
 
 ; hidden commands
 (defn toggle-hide! []
@@ -106,10 +145,7 @@
 
 ; print commands
 (defn to-print! []
-  (swap! app-state (fn [s]
-                     (-> s
-                         (assoc :mode :print)
-                         (update :position position/with-all-pages)))))
+  (swap! app-state assoc :mode :print))
 
 (defn add-print-margin! [amount]
   (swap! app-state update-in [:print :margin] #(max (+ % amount) 0)))

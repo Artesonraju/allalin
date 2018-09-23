@@ -2,7 +2,6 @@
   (:require
     [rum.core :as rum]
     [clojure.string :as string]
-    [allalin.utils :refer [reduce-indexed]]
     [allalin.state :as state]
     [allalin.component :as comp]
     [allalin.slide :as s]))
@@ -12,8 +11,9 @@
 (def actions {:inner-link (comp #(state/go-to-page! (if (zero? %) % (dec %))))})
 
 (rum/defc main < rum/static
-  [page config pagings props scale]
+  [page config part props scale]
   (let [components (:children page)
+        point {:part part :stock (-> props :counts :stock)}
         left-width (s/or-config page config [:left :width])
         right-width (s/or-config page config [:right :width])
         header-height (s/or-config page config [:header :height])
@@ -28,7 +28,7 @@
      [:div.trans {:style {:width (* (/ width 100) (/ s/draw-height ratio))
                           :height (* (/ height 100) s/draw-height)
                           :transform (str "scale(" scale ")")}}
-      (comp/render-children components pagings props)]]))
+      (comp/render-children components point props)]]))
 
 (rum/defc header < rum/static
   [page config props header-left header-right scale]
@@ -169,10 +169,10 @@
 
 (rum/defc basic < s/size-listener-mixin touch-listener-mixin
   [config position]
-  (let [{:keys [paging counts]} position
+  (let [{:keys [parts counts]} position
         {:keys [pages default]} config
         current (:current counts)
-        [page pagings] ((juxt (partial nth pages) (partial nth paging)) current)
+        [page part] ((juxt (partial nth pages) (partial nth parts)) current)
         props {:default default :actions actions :counts counts}
         style (s/basic-style page config)
         header-left (s/corner-area :header :left page config)
@@ -221,7 +221,7 @@
      (aside-wrapper :left page config)
      (aside-wrapper :right page config)
      (runner-wrapper :footer page config)
-     (main page config pagings props scale)
+     (main page config part props scale)
      (header page config props header-left header-right scale)
      (left page config props header-left footer-left scale)
      (footer page config props footer-left footer-right scale)

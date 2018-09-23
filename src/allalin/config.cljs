@@ -1,6 +1,5 @@
 (ns allalin.config
   (:require [cljs.spec.alpha :as s]
-            [allalin.utils :refer [reduce-indexed]]
             [allalin.component :as comp]))
 
 (s/def ::children (s/coll-of ::comp/component))

@@ -56,27 +56,34 @@
 
 (defprotocol IComponent
   (add-default [this default])
-  (build-position [this])
+  (build-part [this])
   (images [this])
-  (render [this paging props]))
-
-(defn render-children
-  "Render a list of components"
-  [components pagings props]
-  (map-indexed
-    (fn [index comp]
-      (rum/with-key
-        (render comp (nth pagings index) props)
-        (str index)))
-    components))
+  (render [this point props]))
 
 ; default implementations
 (extend-type object
   IComponent
-  (build-position [_]
-    {:length 1})
+  (build-part [_]
+    {:moves 0})
   (images [this]
     (mapcat images (:children this))))
+
+(defn render-children
+  [components point props]
+  (-> (reduce
+        (fn [[acc parts stock index] comp]
+          (let [{:keys [moves] :as part} (first parts)
+                new-stock (max 0 (- stock moves))
+                current (min stock moves)]
+            [(conj acc (rum/with-key
+                         (render comp {:part part :stock current} props)
+                         (str index)))
+             (rest parts)
+             new-stock
+             (inc index)]))
+        [[] (-> point :part :children) (:stock point) 0]
+        components)
+      (first)))
 
 ; title
 (rum/defc title < rum/static
@@ -180,10 +187,11 @@
 
 ; list
 (rum/defc liste < rum/static
-  [this paging props]
-  (let [{:keys [type points fragmented? style]} this
+  [this point props]
+  (let [stock (:stock point)
+        {:keys [type points fragmented? style]} this
         displayed (if fragmented?
-                    (take (inc (:current paging)) points)
+                    (take (inc stock) points)
                     points)
         tag (if (= :bullet type) :ul :ol)]
     [tag {:style style}
@@ -195,10 +203,10 @@
   IComponent
   (add-default [this default]
     (default-component :liste this default))
-  (render [this paging props]
-    (liste (add-default this (:default props)) paging props))
-  (build-position [this]
-    {:length (if (:fragmented? this) (count points) 1)}))
+  (render [this point props]
+    (liste (add-default this (:default props)) point props))
+  (build-part [this]
+    {:moves (if (:fragmented? this) (dec (count points)) 0)}))
 
 (extend-protocol IPrintWithWriter
   Liste
@@ -207,20 +215,34 @@
 
 ;section
 (rum/defc section < rum/static
-  [this paging props]
+  [this point props]
   (let [{:keys [children style]} this]
     [:div.section {:style style}
-     (render-children children (:children paging) props)]))
+     (render-children children point props)]))
+
+(defn build-composed-part
+  ([children] (build-composed-part children 0))
+  ([children init]
+   (let [processed (reduce (fn [part child]
+                             (let [child-part (build-part child)]
+                               (-> part
+                                   (update :children conj child-part)
+                                   (update :moves + (:moves child-part)))))
+                           {:moves init
+                            :children []}
+                           children)]
+     (if (> (:moves processed) init)
+       processed
+       {:moves init}))))
 
 (defrecord Section [children]
   IComponent
-  (render [this paging props]
-    (section (add-default this (:default props)) paging props))
+  (render [this point props]
+    (section (add-default this (:default props)) point props))
   (add-default [this default]
     (default-component :section this default))
-  (build-position [_]
-    {:length (count children)
-     :children (mapv build-position children)}))
+  (build-part [_]
+    (build-composed-part children)))
 
 (extend-protocol IPrintWithWriter
   Section
@@ -228,22 +250,39 @@
     (write-all writer "#section" (into {} this))))
 
 ;fragments
+(defn render-fragment-children
+  [components point props]
+  (-> (reduce
+        (fn [[acc parts stock index] comp]
+          (let [{:keys [moves] :as part} (first parts)
+                moves (if (pos? index) (inc moves) (or moves 0))
+                new-stock (max 0 (- stock moves))
+                current (min stock moves)
+                new-acc (conj acc (rum/with-key
+                                    (render comp {:part part :stock current} props)
+                                    (str index)))]
+            (if (= new-stock 0)
+              (reduced [new-acc])
+              [new-acc
+               (rest parts)
+               new-stock
+               (inc index)])))
+        [[] (-> point :part :children) (:stock point) 0]
+        components)
+      (first)))
+
 (rum/defc fragments < rum/static
-  [this paging props]
-  (let [{:keys [children]} this
-        index (inc (:current paging))
-        displayed (take index children)]
-    (render-children displayed (:children paging) props)))
+  [this point props]
+  (render-fragment-children (:children this) point props))
 
 (defrecord Fragments [children]
   IComponent
-  (render [this paging props]
-    (fragments (add-default this (:default props)) paging props))
+  (render [this point props]
+    (fragments (add-default this (:default props)) point props))
   (add-default [this default]
     (default-component :fragments this default))
-  (build-position [_]
-    {:length (count children)
-     :children (mapv build-position children)}))
+  (build-part [_]
+    (build-composed-part children (dec (count children)))))
 
 (extend-protocol IPrintWithWriter
   Fragments
@@ -251,13 +290,27 @@
     (write-all writer "#fragments" (into {} this))))
 
 ;steps
+(defn render-steps-children
+  [components point props]
+  (-> (reduce
+        (fn [[_ parts stock index] comp]
+          (let [{:keys [moves] :as part} (first parts)
+                moves (if (pos? index) (inc moves) (or moves 0))
+                new-stock (max 0 (- stock moves))
+                current (min stock moves)]
+            (if (= new-stock 0)
+              (reduced [(render comp {:part part :stock current} props)])
+              [nil
+               (rest parts)
+               new-stock
+               (inc index)])))
+        [nil (-> point :part :children) (:stock point) 0]
+        components)
+      (first)))
+
 (rum/defc steps < rum/static
-  [this paging props]
-  (let [{:keys [children]} this
-        index (:current paging)
-        step (nth children index)
-        step-paging (nth children index)]
-     (render step step-paging props)))
+  [this point props]
+  (render-steps-children (:children this) point props))
 
 (defrecord Steps [children]
   IComponent
@@ -265,9 +318,8 @@
     (steps (add-default this (:default props)) paging props))
   (add-default [this default]
     (default-component :steps this default))
-  (build-position [_]
-    {:length (count children)
-     :children (mapv build-position children)}))
+  (build-part [_]
+    (build-composed-part children (dec (count children)))))
 
 (extend-protocol IPrintWithWriter
   Steps
@@ -330,6 +382,8 @@
 (s/def ::fragmented? boolean?)
 
 (s/def ::points (s/coll-of ::content))
+
+(s/def ::children (s/coll-of ::component :min-count 1))
 
 (defmethod component-spec Liste [_]
   (s/keys :opt-un [::type ::points ::style ::fragmented?]))
