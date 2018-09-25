@@ -74,10 +74,9 @@
       (swap! app-state
         (fn [state]
           (let [counts (-> state :position :counts)]
-            (if (and (= current (:current counts)) (stock (:stock counts)))
+            (if (and (= current (:current counts)) (= stock (:stock counts)))
               state
               (update state :position #(position/nth-position current stock %)))))))))
-
 
 (defn init-channel!
   [state]
@@ -149,3 +148,40 @@
 
 (defn add-print-margin! [amount]
   (swap! app-state update-in [:print :margin] #(max (+ % amount) 0)))
+
+; notes commands
+(defonce timer-state (atom {:active false
+                            :seconds 0}))
+
+(defn update-timer!
+  []
+  (let [ts @timer-state]
+    (when-let [update-fn (:update ts)]
+      (update-fn (:seconds ts)))))
+
+(defn timer-callback
+  []
+  (swap! timer-state update :seconds inc)
+  (update-timer!))
+
+(defn to-notes! []
+  (swap! app-state
+    (fn [state]
+      (let [timer @timer-state]
+        (when (not (:active timer))
+          (swap! timer-state assoc :active true)
+          (js/setInterval timer-callback 1000))
+        (assoc state :mode :notes)))))
+
+(defn next-layout
+  [layouts layout]
+  (if (= layout (first layouts))
+    (next layouts)
+    (recur (rest layouts) layout)))
+
+(defn next-layout! [layouts]
+  (swap! app-state update-in [:notes :layout] next-layout layouts))
+
+(defn reset-timer! []
+  (swap! timer-state assoc :seconds 0)
+  (update-timer!))

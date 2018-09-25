@@ -39,7 +39,7 @@
          moves (-> pages (nth safe-index) :moves)
          safe-stock (min stock moves)]
      (update position :counts merge {:current safe-index
-                                     :stock stock
+                                     :stock safe-stock
                                      :moves moves}))))
 
 (defn adapt-position
@@ -47,9 +47,8 @@
   (let [new-total (-> new-pos :counts :total)
         {old-current :current old-stock :stock} (:counts old-pos)
         new-current (min old-current (dec new-total))
-        new-moves (-> new-pos :parts (nth new-current) :moves dec)
+        new-moves (-> new-pos :parts (nth new-current) :moves)
         new-stock (min old-stock new-moves)]
-    (println "stock" new-stock)
     (update new-pos :counts assoc :current new-current
                                   :stock new-stock
                                   :moves new-moves)))

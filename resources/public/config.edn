@@ -85,7 +85,8 @@
 
          {:children [#title{:content "Allalin allows to create HTML slide decks that are interactive and responsive"
                             :level 3
-                            :style {:top "35%"}}]}
+                            :style {:top "35%"}}]
+          :notes ["Note 1" "Note 2"]}
 
          {:children [#title{:content "Configuration"}
                      #text{:content "Allalin presentations are configured through an edn file (config.edn) where the different properties, pages and components are defined."

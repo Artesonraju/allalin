@@ -6,7 +6,8 @@
    [allalin.state :as state]
    [allalin.mode.basic :as basic]
    [allalin.mode.hidden :as hidden]
-   [allalin.mode.print :as print]))
+   [allalin.mode.print :as print]
+   [allalin.mode.notes :as notes]))
 
 (defn get-app-element []
   (gdom/getElement "app"))
@@ -23,6 +24,7 @@
                   toggle-fullscreen ["f" "F"]
                   state/toggle-hide! ["h" "H"]
                   state/to-print! ["p" "P"]
+                  state/to-notes! ["n" "N"]
                   state/to-basic! ["s" "S"]})
 
 (defn to-key-map [action-keys]
@@ -40,6 +42,8 @@
                    key-action)
      :hidden key-action
      :print (merge (to-key-map print/action-keys)
+                   key-action)
+     :notes (merge (to-key-map notes/action-keys)
                    key-action)}))
 
 (defn key-handler
@@ -65,11 +69,13 @@
      :will-unmount unmount}))
 
 (rum/defc loaded < rum/static
-  [config mode position print]
-  (case mode
-    :basic (basic/basic config position)
-    :hidden (hidden/hidden)
-    :print (print/print- config position print)))
+  [state]
+  (let [{:keys [config mode position print notes]} state]
+    (case mode
+      :basic (basic/basic config position)
+      :hidden (hidden/hidden)
+      :print (print/print- config position print)
+      :notes (notes/notes config position notes))))
 
 (rum/defc loading < rum/static
   []
@@ -87,12 +93,12 @@
 
 (rum/defc app < rum/reactive key-listener-mixin
   []
-  (let [{:keys [error phase config mode position print]} (rum/react state/app-state)]
+  (let [{:keys [error phase] :as state} (rum/react state/app-state)]
     [:div.fill
      (case phase
        :loading (loading)
        :error (err error)
-       :loaded (loaded config mode position print))]))
+       :loaded (loaded state))]))
 
 (defn mount [el]
   (rum/mount (app) el))

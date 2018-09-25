@@ -162,10 +162,7 @@
                                          false)
                    (dissoc state ::touchstart-handler ::touchend-handler))})
 
-(def action-keys {state/go-start! ["Home"]
-                  state/go-next! ["Enter" " " "PageDown" "ArrowRight" "ArrowDown"]
-                  state/go-previous! ["Backspace" "PageUp" "ArrowLeft" "ArrowUp"]
-                  state/go-end! ["End"]})
+(def action-keys s/action-keys)
 
 (rum/defc basic < s/size-listener-mixin touch-listener-mixin
   [config position]
