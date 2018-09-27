@@ -175,12 +175,12 @@
 
 (defn next-layout
   [layouts layout]
-  (if (= layout (first layouts))
-    (next layouts)
+  (if (or (= layout (first layouts)) (nil? layout))
+    (second layouts)
     (recur (rest layouts) layout)))
 
 (defn next-layout! [layouts]
-  (swap! app-state update-in [:notes :layout] next-layout layouts))
+  (swap! app-state update-in [:notes :layout] #(next-layout layouts (or % :notes-only))))
 
 (defn reset-timer! []
   (swap! timer-state assoc :seconds 0)

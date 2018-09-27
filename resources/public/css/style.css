@@ -179,28 +179,13 @@ header, footer, aside {
 }
 
 .print .root {
-    transform-origin: top left;
     position: relative;
     font-size: 1000px;
     page-break-inside: avoid;
 }
 
-.notes {
-    font-family: Arial, sans-serif;
-    height: 100%;
-}
-
-.notes-only-header {
-    padding: 2%;
-    display: flex;
-    justify-content: space-between;
-    font-size: 3%;
-    background: #666;
-    color: #222;
-}
-
-.notes-only-header > div {
-    flex-basis: 30%;
+.slide {
+    transform-origin: top left;
 }
 
 .notes-timer {
@@ -209,26 +194,132 @@ header, footer, aside {
 }
 
 .notes-value {
-    padding-left: 2vh;
+    font-weight: 600;
+    padding-left: 1vw;
 }
 
 .notes-caption {
     font-weight: 700;
-    font-size: 4.2vh;
-    color: #aaa;
+    font-size: 3vmin;
+    color: #5f97b1;
 }
 
 .notes-body {
     height: 100%;
     background: #eee;
     color: #222;
-    padding: 2%;
-    font-size: 2%;
-    padding-top: 1%;
 }
 
 .notes-body div{
-    padding: 1% 0 0 2vh;
+    padding: 1% 0 0 1vw;
+}
+
+.notes-only {
+    font-family: Arial, sans-serif;
+    height: 100%;
+    display : flex;
+    flex-direction: column;
+}
+
+.notes-only .notes-counters {
+    padding: 2%;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10vmin;
+    background: #666;
+    color: #333;
+}
+
+.notes-only .notes-counters > div {
+    flex-basis: 30%;
+}
+
+.notes-only .notes-body {
+    padding: 0 1vmin;
+    font-size: 10vmin;
+}
+
+.notes-n-slides {
+    background: repeating-linear-gradient(45deg, #626262, #626262 2vmin, #666 2vmin, #666 4vmin);
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    display: grid;
+    grid-template-areas:
+        "left upper-right"
+        "left lower-right"
+        "body body";
+}
+
+.notes-n-slides-current {
+    grid-area: left;
+    justify-self: center;
+    align-self: center;
+}
+
+.notes-n-slides-next {
+    grid-area: upper-right;
+    justify-self: center;
+    align-self: center;
+}
+
+.notes-n-slides-end {
+    grid-area: upper-right;
+    font-family: Arial, sans-serif;
+    font-weight: 700;
+    font-size: 2.0vw;
+    color: #5f97b1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notes-n-slides .notes-counters {
+    grid-area: lower-right;
+    justify-self: stretch;
+    align-self: stretch;
+    font-size: 4vmin;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    margin: 0 2vmin;
+}
+
+.notes-n-slides .notes-timer {
+    background: #eee;
+    padding: 1%;
+}
+
+.notes-n-slides .notes-timer > div{
+    display: inline-block;
+}
+
+.notes-n-slides .notes-body {
+    grid-area: body;
+    position: relative;
+    padding: 0 1%;
+    font-size: 5vmin;
+    display: flex;
+    flex-flow: column wrap;
+}
+
+.notes-n-slides .notes-body > div {
+    width: 50%;
+}
+
+.notes-n-slides .notes-body::after {
+    content: '';
+    position: absolute;
+    background-color: #fff;
+    left: 50%;
+    top: 10%;
+    height: 80%;
+    width: 2px;
+}
+
+.notes-n-slides-current > div, .notes-n-slides-next > div{
+    margin: 0 auto;
 }
 
 .curtain {
@@ -266,6 +357,10 @@ main {
 .print .trans {
     min-width: 100%;
     min-height: 100%;
+}
+
+.notes-n-slides .trans {
+    height: 100%;
 }
 
 header {

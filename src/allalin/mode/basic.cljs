@@ -166,24 +166,23 @@
 
 (rum/defc basic < s/size-listener-mixin touch-listener-mixin
   [config position]
-  (let [{:keys [parts counts]} position
+  (let [window-height (.-innerHeight js/window)
+        window-width (.-innerWidth js/window)
+        {:keys [parts counts]} position
         {:keys [pages default]} config
         current (:current counts)
         [page part] ((juxt (partial nth pages) (partial nth parts)) current)
         props {:default default :actions actions :counts counts}
-        style (s/basic-style page config)
         header-left (s/corner-area :header :left page config)
         header-right (s/corner-area :header :right page config)
         footer-left (s/corner-area :footer :left page config)
         footer-right (s/corner-area :footer :right page config)
-        window-height (.-innerHeight js/window)
-        window-width (.-innerWidth js/window)
         screen-ratio (:screen-ratio config)
         window-ratio (/ window-height window-width)
         higher? (> window-ratio screen-ratio)
-        scale (if (> screen-ratio window-ratio)
-                (/ window-height s/draw-height)
-                (/ window-width (/ s/draw-height screen-ratio)))
+        scale (if higher?
+                (/ window-width (/ s/draw-height screen-ratio))
+                (/ window-height s/draw-height))
         header-height (s/or-config page config [:header :height])
         left-width (s/or-config page config [:left :width])
         footer-height (s/or-config page config [:footer :height])
@@ -213,7 +212,7 @@
                                         "'" (string/join " " (map name [:left :left :main :right :right])) "'\n"
                                         "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'\n"
                                         "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'")}]
-    [:div.basic.root.bg-ease.fill {:style (merge style grid)}
+    [:div.basic.root.bg-ease.fill {:style (merge (s/basic-style page config) grid)}
      (runner-wrapper :header page config)
      (aside-wrapper :left page config)
      (aside-wrapper :right page config)

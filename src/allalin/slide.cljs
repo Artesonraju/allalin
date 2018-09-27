@@ -1,18 +1,36 @@
 (ns allalin.slide
   (:require
+    [clojure.string :as string]
     [rum.core :as rum]
     [allalin.state :as state]
     [allalin.component :as comp]))
 
 (def draw-height 1000)
 
+(defn or-config [page config keys]
+  (or (get-in page keys) (get-in config keys)))
+
+; shared by basic and notes
 (def action-keys {state/go-start! ["Home"]
                   state/go-next! ["Enter" " " "PageDown" "ArrowRight" "ArrowDown"]
                   state/go-previous! ["Backspace" "PageUp" "ArrowLeft" "ArrowUp"]
                   state/go-end! ["End"]})
 
-(defn or-config [page config keys]
-  (or (get-in page keys) (get-in config keys)))
+(def size-listener-mixin
+  { :did-mount    (fn [state]
+                    (let [comp (:rum/react-component state)
+                          resize-handler #(rum/request-render comp)]
+                      (.addEventListener js/window
+                                         "resize"
+                                         resize-handler
+                                         false)
+                      (assoc state ::resize-handler resize-handler)))
+   :will-unmount (fn [state]
+                   (.removeEventListener js/document
+                                         "resize"
+                                         (::resize-handler state)
+                                         false)
+                   (dissoc state ::resize-handler))})
 
 (rum/defc progress-bar
   [config counts scale]
@@ -48,23 +66,6 @@
                               :background-size "cover"
                               :background-position bg-position))))
 
-
-(def size-listener-mixin
-  { :did-mount    (fn [state]
-                    (let [comp (:rum/react-component state)
-                          resize-handler #(rum/request-render comp)]
-                      (.addEventListener js/window
-                                         "resize"
-                                         resize-handler
-                                         false)
-                      (assoc state ::resize-handler resize-handler)))
-   :will-unmount (fn [state]
-                   (.removeEventListener js/document
-                                         "resize"
-                                         (::resize-handler state)
-                                         false)
-                   (dissoc state ::resize-handler))})
-
 (defn corner-area
   [runner aside page config]
   (let [height (or-config page config [runner :height])
@@ -78,7 +79,8 @@
 (rum/defc main < rum/static
   [page part props]
   (let [components (:children page)
-        point {:part part :stock (dec (:moves part))}]
+        stock (or (-> props :counts :stock) (:moves part))
+        point {:part part :stock stock}]
     [:main
      [:div.trans
       (comp/render-children components point props)]]))
@@ -122,3 +124,38 @@
                            :background-image (or-config page config [:right :background-image])}}
      [:div.trans {:style {:color (or-config page config [:right :color])}}
       (comp/render-children components nil props)]]))
+
+(rum/defc slide
+  [page config part props print-width]
+  (let [header-left (corner-area :header :left page config)
+        header-right (corner-area :header :right page config)
+        footer-left (corner-area :footer :left page config)
+        footer-right (corner-area :footer :right page config)
+        screen-ratio (:screen-ratio config)
+        scale (/ print-width (/ draw-height screen-ratio))
+        header-height (or-config page config [:header :height])
+        left-width (or-config page config [:left :width])
+        footer-height (or-config page config [:footer :height])
+        right-width (or-config page config [:right :width])
+        main-height (- 100 header-height footer-height)
+        main-width (- 100 left-width right-width)
+        grid {:width (str (/ draw-height screen-ratio) "px")
+              :height (str draw-height "px")
+              :transform (str "scale(" scale ")")
+              :grid-template-rows (str (* (/ header-height 100) draw-height) "px"
+                                       " " (* (/ main-height 100) draw-height) "px"
+                                       " " (* (/ footer-height 100) draw-height) "px")
+              :grid-template-columns (str (* (/ left-width 100) (/ draw-height screen-ratio)) "px"
+                                          " " (* (/ main-width 100) (/ draw-height screen-ratio)) "px"
+                                          " " (* (/ right-width 100) (/ draw-height screen-ratio)) "px")
+              :grid-template-areas (str "'" (string/join " " (map name [header-left :header header-right])) "'\n"
+                                        "'" (string/join " " (map name [:left :main :right])) "'\n"
+                                        "'" (string/join " " (map name [footer-left :footer footer-right])) "'")}]
+
+    [:div.root.fill.slide {:style (merge (basic-style page config) grid)}
+     (main page part props)
+     (header page config props)
+     (left page config props)
+     (footer page config props)
+     (right page config props)
+     (progress-bar config (:counts props) 1)]))
