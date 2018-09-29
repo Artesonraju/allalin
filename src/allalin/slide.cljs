@@ -2,7 +2,6 @@
   (:require
     [clojure.string :as string]
     [rum.core :as rum]
-    [allalin.state :as state]
     [allalin.component :as comp]))
 
 (def draw-height 1000)
@@ -10,11 +9,12 @@
 (defn or-config [page config keys]
   (or (get-in page keys) (get-in config keys)))
 
-; shared by basic and notes
-(def action-keys {state/go-start! ["Home"]
-                  state/go-next! ["Enter" " " "PageDown" "ArrowRight" "ArrowDown"]
-                  state/go-previous! ["Backspace" "PageUp" "ArrowLeft" "ArrowUp"]
-                  state/go-end! ["End"]})
+(defn tip [keys explanation]
+  [:div.pane-tip
+   (->> keys
+        (map #(vector :span.key {:key %} %))
+        (interpose " / "))
+   (str " " explanation)])
 
 (def size-listener-mixin
   { :did-mount    (fn [state]
@@ -62,7 +62,7 @@
     (cond-> {}
       (some? bg-color) (assoc :background-color bg-color)
       (some? color) (assoc :color color)
-      (some? bg-image) (assoc :background-image (str "url(./image" bg-image ")")
+      (some? bg-image) (assoc :background-image (str "url(./images/" bg-image ")")
                               :background-size "cover"
                               :background-position bg-position))))
 

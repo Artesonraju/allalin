@@ -7,8 +7,12 @@
 (def print-width 1500) ;px
 (def margin-step 20) ;px
 
-(def action-keys {(partial state/add-print-margin! margin-step) ["+" "="]
-                  (partial state/add-print-margin! (- margin-step)) ["-"]})
+(def action-keys [[(partial state/add-print-margin! margin-step)
+                   {:keys ["+" "="]
+                    :tip (s/tip ["+"] "increase margin between slides")}]
+                  [(partial state/add-print-margin! (- margin-step))
+                   {:keys ["-"]
+                    :tip (s/tip ["−"] "decrease margin between slides")}]])
 
 (rum/defc slide < s/size-listener-mixin
   [page config part props margin]

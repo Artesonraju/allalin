@@ -50,9 +50,9 @@
 
 (s/def ::title string?)
 (s/def ::screen-ratio (s/and number? #(> % 0) #(<= % 1)))
-(s/def ::disable-reaload boolean?)
-
-(s/def ::initial-mode #{:basic})
+(s/def ::disable-reload boolean?)
+(s/def ::disable-print boolean?)
+(s/def ::disable-notes boolean?)
 
 (s/def ::default map?)
 
@@ -70,14 +70,14 @@
                    ::right
                    ::default]
           :opt-un [::progress-bar
-                   ::disable-reaload
+                   ::disable-reload
+
                    ::background-image
                    ::background-color
-                   ::background-position
-                   ::initial-mode]))
+                   ::background-position]))
 
-(defn mode [config old-mode]
-  (or old-mode (:initial-mode config) :basic))
+(defn mode [old-mode]
+  (or old-mode :basic))
 
 (defn valid [config]
   (s/valid? ::config config))

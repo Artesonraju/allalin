@@ -162,8 +162,6 @@
                                          false)
                    (dissoc state ::touchstart-handler ::touchend-handler))})
 
-(def action-keys s/action-keys)
-
 (rum/defc basic < s/size-listener-mixin touch-listener-mixin
   [config position]
   (let [window-height (.-innerHeight js/window)
@@ -212,7 +210,7 @@
                                         "'" (string/join " " (map name [:left :left :main :right :right])) "'\n"
                                         "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'\n"
                                         "'" (string/join " " (map name [footer-left footer-left :footer footer-right footer-right])) "'")}]
-    [:div.basic.root.bg-ease.fill {:style (merge (s/basic-style page config) grid)}
+    [:div.basic.root.bg-ease {:style (merge (s/basic-style page config) grid)}
      (runner-wrapper :header page config)
      (aside-wrapper :left page config)
      (aside-wrapper :right page config)

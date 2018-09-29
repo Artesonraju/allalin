@@ -2,7 +2,6 @@
  :disable-reload true
  :title "Allalin - Presentation framework"
  :synchro true
- :initial-mode :basic
  :color "#ddd"
  :background-color "#212121"
  :background-position "center"

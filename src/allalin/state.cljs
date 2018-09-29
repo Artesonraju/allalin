@@ -14,11 +14,6 @@
                           :channel nil
                           :mode nil}))
 
-(defn reload! []
-  (when (not (get-in @app-state [:config :disable-reload]))
-    (swap! app-state assoc :phase :loading)
-    true))
-
 (defn synchro
   [state]
   (let [{:keys [config config-hash channel]} state
@@ -37,7 +32,7 @@
         (-> state
             (dissoc :error)
             (assoc :config config
-                   :mode (conf/mode config mode)
+                   :mode (conf/mode mode)
                    :phase :loaded
                    :position (position/init-position config position))
             (synchro))))))
@@ -106,16 +101,18 @@
   (error! err))
 
 (defn load-conf! []
-  (when (reload!)
-    (set! (. js/document -title) "Allalin - Loading...")
-    (-> (js/fetch "./config.edn")
-        (.then (fn [r]
-                 (if (.-ok r)
-                   r
-                   (throw (fetch-error r)))))
-        (.then (fn [r] (.text r)))
-        (.then #(init-config! (read-config %)))
-        (.catch (fn [err] (set-config-error! err))))))
+  (swap! app-state assoc :phase :loading)
+  (set! (. js/document -title) "Allalin - Initialisation...")
+  (swap! app-state assoc :loading "Config loading...")
+  (-> (js/fetch "./config.edn")
+      (.then (fn [r]
+               (if (.-ok r)
+                 r
+                 (throw (fetch-error r)))))
+      (.then (fn [r] (.text r)))
+      (.then #(do
+                (init-config! (read-config %))))
+      (.catch (fn [err] (set-config-error! err)))))
 
 ; basic commands
 (defn to-basic! []
@@ -136,15 +133,23 @@
 (defn go-end! []
   (post (swap! app-state update :position position/last-position)))
 
-; hidden commands
+(defn toggle-mode
+  [state mode]
+  (if (= mode (:mode state))
+    (assoc state :mode :basic)
+    (assoc state :mode mode)))
+
+; curtain
 (defn toggle-hide! []
-  (swap! app-state (fn [s]
-                     (assoc s :mode (or (:hidden s) :hidden)
-                              :hidden (or (:mode s) :basic)))))
+  (swap! app-state update :hidden not))
+
+; help
+(defn toggle-help! []
+  (swap! app-state update :help not))
 
 ; print commands
-(defn to-print! []
-  (swap! app-state assoc :mode :print))
+(defn toggle-print! []
+  (swap! app-state toggle-mode :print))
 
 (defn add-print-margin! [amount]
   (swap! app-state update-in [:print :margin] #(max (+ % amount) 0)))
@@ -164,14 +169,14 @@
   (swap! timer-state update :seconds inc)
   (update-timer!))
 
-(defn to-notes! []
+(defn toggle-notes! []
   (swap! app-state
     (fn [state]
       (let [timer @timer-state]
         (when (not (:active timer))
           (swap! timer-state assoc :active true)
           (js/setInterval timer-callback 1000))
-        (assoc state :mode :notes)))))
+        (toggle-mode state :notes)))))
 
 (defn next-layout
   [layouts layout]

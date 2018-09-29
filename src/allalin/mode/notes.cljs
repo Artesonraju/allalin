@@ -7,9 +7,12 @@
 
 (def layouts (apply concat (repeat [:notes-only :notes-n-slides])))
 
-(def action-keys (merge s/action-keys
-                        {(partial state/next-layout! layouts) ["m" "M"]
-                         state/reset-timer! ["t" "T"]}))
+(def action-keys [[(partial state/next-layout! layouts)
+                   {:keys ["m" "M"]
+                    :tip (s/tip ["M"] "switch note display mode")}]
+                  [state/reset-timer!
+                   {:keys ["t" "T"]
+                    :tip (s/tip ["T"] "reset timer")}]])
 
 (defn two-digits [n] (if (> n 9) (str n) (str "0" n)))
 
@@ -87,7 +90,7 @@
   [config position width]
   (let [next-position (position/inc-position position)]
     (if (= position next-position)
-      [:div.notes-n-slides-end
+      [:div.notes-n-slides-end.notes-bg
        "END"]
       (let [screen-ratio (:screen-ratio config)
             height (* width screen-ratio)
@@ -110,14 +113,21 @@
         screen-ratio (:screen-ratio config)
         base-width (min window-width (/ window-height screen-ratio))
         current-width (/ (* base-width 2) 3)
-        next-width (/ base-width 3)
-        next-height (min (* current-width screen-ratio) (/ window-height 3))
-        counters-height (min (* next-width screen-ratio) (/ window-height 3))
+        next-max-height (/ (* window-height 5) 11)
+        next-max-width (/ window-width 3)
+        next-height (min (* next-max-width screen-ratio) next-max-height)
+        next-width (/ next-height screen-ratio)
+        counters-height (- (/ (* window-height 2) 3) next-height)
         large-width (max current-width (/ (* window-width 5) 9))]
-    [:div.notes-n-slides {:style {:grid-template-rows (str next-height "px " counters-height "px auto")
-                                  :grid-template-columns (str large-width "px auto")}};
-
+    [:div.notes-n-slides {:style {:grid-template-rows (str counters-height "px " next-height "px auto")
+                                  :grid-template-columns (str large-width "px auto")}}
+     [:div.notes-n-slides-bg-current.notes-bg
+      [:div
+       "CURRENT"]]
      (current-slide config position current-width)
+     [:div.notes-n-slides-bg-next.notes-bg
+      [:div
+       "NEXT"]]
      (next-slide config position next-width)
      (counters position timers)
      (body config position)]))

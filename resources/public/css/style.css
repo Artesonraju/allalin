@@ -103,11 +103,6 @@ a {
     font-weight: 800;
 }
 
-html, body {
-    width: 100%;
-    height: 100%;
-}
-
 body {
     font-family : "Merriweather Sans";
 }
@@ -124,6 +119,118 @@ header, footer, aside {
 
 #app {
     font-size: 100vw;
+}
+
+.relative {
+    position: relative;
+}
+
+.pane {
+    width: 100%;
+    font-family: Arial, sans-serif;
+    font-weight: 600;
+    background: #111;
+    color: #ccc;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    align-content: flex-end;
+    font-size: 5vmin;
+}
+
+.pane-tip {
+    color: #5f97b1;
+    padding: 1vmin 4vmin;
+}
+
+.disabled .pane-tip {
+    color: #444;
+}
+
+.pane-title {
+    color: #c62626;
+    padding: 8vmin 8vmin 0 0;
+    font-size: 120%;
+}
+
+.pane-state {
+    padding: 6vmin 8vmin 8vmin 0;
+}
+
+.pane .key {
+    display: inline-block;
+    vertical-align: middle;
+    border: solid #5f97b1 1px;
+    border-radius: 0.8vmin;
+    padding: 0.5vmin;
+    margin: 0 0.5vmin;
+    font-size: 80%;
+    box-sizing: border-box;
+    width: 2.1em;
+    height: 2.1em;
+}
+
+.pane .disabled .key {
+    border-color: #444;
+}
+
+.help {
+    position: absolute;
+    z-index: 4;
+    opacity: 0;
+    height: 100vh;
+    visibility: hidden;
+    transition: opacity 1s ease-out, visibility 1s;
+    background: rgb(17, 17, 17, 0.96);
+    font-size: 3vmin;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: flex-start;
+}
+
+.help.on{
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 1s ease-out, visibility 0s;
+}
+
+.help > .help-tip {
+    width: 50%;
+}
+
+.help-sub {
+    padding-left: 3vmin;
+}
+
+.curtain {
+    position: absolute;
+    bottom: 100%;
+    height: 100%;
+    padding-bottom: 8vmin;
+    z-index: 2;
+    transition: all 700ms cubic-bezier(.22,.61,.36,1);
+}
+
+.curtain.on {
+    bottom: 0;
+    transition: all 700ms cubic-bezier(.25,.46,.45,.94);
+}
+
+.loading {
+    position: absolute;
+    z-index: 3;
+    height: 100vh;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 1s ease-out 2s, visibility 3s;
+}
+
+.loading.on{
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0s, visibility 0s;
 }
 
 .abnormal {
@@ -152,10 +259,6 @@ header, footer, aside {
     background-color: #a00500;
 }
 
-.loading {
-    background-color: #222;
-}
-
 .bg-ease {
     transition: background .3s ease-in-out;
 }
@@ -167,6 +270,7 @@ header, footer, aside {
 }
 
 .basic {
+    height: 100vh;
     overflow: hidden;
 }
 
@@ -216,7 +320,7 @@ header, footer, aside {
 
 .notes-only {
     font-family: Arial, sans-serif;
-    height: 100%;
+    height: 100vmin;
     display : flex;
     flex-direction: column;
 }
@@ -241,7 +345,7 @@ header, footer, aside {
 
 .notes-n-slides {
     background: repeating-linear-gradient(45deg, #626262, #626262 2vmin, #666 2vmin, #666 4vmin);
-    height: 100%;
+    height: 100vmin;
     width: 100%;
     overflow: hidden;
     display: grid;
@@ -258,37 +362,57 @@ header, footer, aside {
 }
 
 .notes-n-slides-next {
-    grid-area: upper-right;
+    grid-area: lower-right;
     justify-self: center;
     align-self: center;
 }
 
-.notes-n-slides-end {
-    grid-area: upper-right;
+.notes-bg {
     font-family: Arial, sans-serif;
+    grid-area: lower-right;
     font-weight: 700;
+}
+
+.notes-bg div{
+	writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    color: #777;
     font-size: 2.0vw;
-    color: #5f97b1;
+    padding: 2vmin;
+}
+
+.notes-n-slides-end {
+    color: #ddd;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 5.0vw;
+}
+
+.notes-n-slides-bg-current {
+    grid-area: left;
+}
+
+.notes-n-slides-bg-next {
+    grid-area: lower-right;
+    box-sizing: border-box;
+    border-left: solid #ccc 1px;
 }
 
 .notes-n-slides .notes-counters {
-    grid-area: lower-right;
-    justify-self: stretch;
+    font-family: Arial, sans-serif;
+    grid-area: upper-right;
     align-self: stretch;
     font-size: 4vmin;
-    color: #333;
+    background: #eee;
     display: flex;
     flex-direction: column;
     justify-content: space-evenly;
-    margin: 0 2vmin;
+    padding-left: 2vmin;
 }
 
 .notes-n-slides .notes-timer {
-    background: #eee;
-    padding: 1%;
+    padding: 0.3vmin;
 }
 
 .notes-n-slides .notes-timer > div{
@@ -320,11 +444,6 @@ header, footer, aside {
 
 .notes-n-slides-current > div, .notes-n-slides-next > div{
     margin: 0 auto;
-}
-
-.curtain {
-    background: #111;
-    transition: opacity 10s ease-in-out;
 }
 
 .header-wrapper {
