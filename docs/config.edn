@@ -1,5 +1,5 @@
 {:screen-ratio 0.625 ; 4/3 => 0.75, 16/10 => 0.625, 16:9 => 0.5625
- :disable-reload true
+ ;:disable-edit true
  :title "Allalin - Presentation framework"
  :synchro true
  :color "#ddd"

@@ -9,10 +9,22 @@
 (defn or-config [page config keys]
   (or (get-in page keys) (get-in config keys)))
 
-(defn tip [keys explanation]
+(defn key- [k]
+  [:span.key {:key k
+              :class (when (> (count k) 1) "small")}
+   k])
+
+(defn combination [c]
+  (if (vector? c)
+    (->> c
+         (map key-)
+         (interpose "+"))
+    (key- c)))
+
+(defn tip [combinations explanation]
   [:div.pane-tip
-   (->> keys
-        (map #(vector :span.key {:key %} %))
+   (->> combinations
+        (map combination)
         (interpose " / "))
    (str " " explanation)])
 

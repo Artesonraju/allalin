@@ -11,5 +11,4 @@ rm test.html
 zip -r ../allalin.zip ./*
 cd ..
 cp -r ./dist ./docs
-sed -i -e 's/; :disable-reload true/:disable-reload true/g' ./docs/config.edn
 rm -r ./dist

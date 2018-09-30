@@ -50,7 +50,7 @@
 
 (s/def ::title string?)
 (s/def ::screen-ratio (s/and number? #(> % 0) #(<= % 1)))
-(s/def ::disable-reload boolean?)
+(s/def ::disable-edit boolean?)
 (s/def ::disable-print boolean?)
 (s/def ::disable-notes boolean?)
 
@@ -70,8 +70,9 @@
                    ::right
                    ::default]
           :opt-un [::progress-bar
-                   ::disable-reload
-
+                   ::disable-edit
+                   ::disable-notes
+                   ::disable-print
                    ::background-image
                    ::background-color
                    ::background-position]))

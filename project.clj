@@ -7,6 +7,7 @@
   :min-lein-version "2.7.1"
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.339"]
+                 [org.clojure/core.async "0.4.474"]
                  [rum "0.11.2"]]
   :source-paths ["src"]
   :aliases {"fig"       ["trampoline" "run" "-m" "figwheel.main"]

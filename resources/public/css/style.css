@@ -19,7 +19,6 @@ time, mark, audio, video {
 	margin: 0;
 	padding: 0;
 	border: 0;
-	font-size: 100%;
 	font: inherit;
 	vertical-align: baseline;
 }
@@ -121,11 +120,17 @@ header, footer, aside {
     font-size: 100vw;
 }
 
+.none {
+    display: none;
+}
+
 .relative {
     position: relative;
 }
 
 .pane {
+    position: fixed;
+    height: 100%;
     width: 100%;
     font-family: Arial, sans-serif;
     font-weight: 600;
@@ -150,13 +155,13 @@ header, footer, aside {
 }
 
 .pane-title {
-    color: #c62626;
+    color: #9c2334;
     padding: 8vmin 8vmin 0 0;
     font-size: 120%;
 }
 
-.pane-state {
-    padding: 6vmin 8vmin 8vmin 0;
+.pane-state, .error .pane-tip{
+    padding: 6vmin 8vmin 8vmin 6vmin;
 }
 
 .pane .key {
@@ -164,12 +169,18 @@ header, footer, aside {
     vertical-align: middle;
     border: solid #5f97b1 1px;
     border-radius: 0.8vmin;
-    padding: 0.5vmin;
+    padding: 0.5vmin 1vmin 0 1vmin;
     margin: 0 0.5vmin;
-    font-size: 80%;
+    font-size: 120%;
     box-sizing: border-box;
-    width: 2.1em;
-    height: 2.1em;
+    min-width: 2.5em;
+    height: 2.5em;
+}
+
+.pane .key.small {
+    font-size: 80%;
+    min-width: 4em;
+    height: 4em;
 }
 
 .pane .disabled .key {
@@ -177,14 +188,13 @@ header, footer, aside {
 }
 
 .help {
-    position: absolute;
     z-index: 4;
     opacity: 0;
-    height: 100vh;
     visibility: hidden;
-    transition: opacity 1s ease-out, visibility 1s;
-    background: rgb(17, 17, 17, 0.96);
-    font-size: 3vmin;
+    transition: opacity 0.5s ease-out, visibility 0.5s;
+    transition: opacity 0.5s ease-out, visibility 0.5s;
+    background: rgba(17, 17, 17, 0.93);
+    font-size: 3.5vmin;
     justify-content: flex-start;
     align-items: flex-start;
     align-content: flex-start;
@@ -193,7 +203,7 @@ header, footer, aside {
 .help.on{
     opacity: 1;
     visibility: visible;
-    transition: opacity 1s ease-out, visibility 0s;
+    transition: opacity 0.5s ease-out, visibility 0s;
 }
 
 .help > .help-tip {
@@ -205,9 +215,7 @@ header, footer, aside {
 }
 
 .curtain {
-    position: absolute;
     bottom: 100%;
-    height: 100%;
     padding-bottom: 8vmin;
     z-index: 2;
     transition: all 700ms cubic-bezier(.22,.61,.36,1);
@@ -219,12 +227,10 @@ header, footer, aside {
 }
 
 .loading {
-    position: absolute;
     z-index: 3;
-    height: 100vh;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 1s ease-out 2s, visibility 3s;
+    transition: opacity 0.5s ease-out 1s, visibility 1.5s;
 }
 
 .loading.on{
@@ -237,26 +243,6 @@ header, footer, aside {
     display: flex;
     flex-direction: column;
     justify-content: center;
-}
-
-.abnormal div {
-    padding: 2vw;
-    color: #fff;
-}
-
-.abnormal h1 {
-    position: static;
-    text-align: left;
-    text-transform: uppercase;
-    font-size: 5%;
-}
-
-.abnormal p {
-    font-size: 4%;
-}
-
-.error {
-    background-color: #a00500;
 }
 
 .bg-ease {

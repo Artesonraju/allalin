@@ -2,16 +2,21 @@
   (:require
     [clojure.string :as string]
     [cljs.reader :as reader]
+    [cljs.core.async :refer [go-loop put! chan <! >!]]
     [allalin.position :as position]
     [allalin.config :as conf]
     [allalin.component :as comp]))
+
+(def default-filename "allalin.edn")
 
 ; state
 (defonce app-state (atom {:phase :loading
                           :config nil
                           :config-hash nil
+                          :config-str nil
                           :position nil
                           :channel nil
+                          :filename nil
                           :mode nil}))
 
 (defn synchro
@@ -25,17 +30,21 @@
         (assoc state :config-hash h
                      :channel (js/BroadcastChannel. (str h)))))))
 
-(defn build-config! [config]
-  (swap! app-state
-    (fn [state]
-      (let [{:keys [position mode]} state]
-        (-> state
-            (dissoc :error)
-            (assoc :config config
-                   :mode (conf/mode mode)
-                   :phase :loaded
-                   :position (position/init-position config position))
-            (synchro))))))
+(defn build-config!
+  [file]
+  (let [{:keys [edn content filename]} file]
+    (swap! app-state
+      (fn [state]
+        (let [{:keys [position mode]} state]
+          (-> state
+              (dissoc :error)
+              (assoc :config edn
+                     :config-str (or content (str edn))
+                     :mode (conf/mode mode)
+                     :phase :loaded
+                     :filename filename
+                     :position (position/init-position edn position))
+              (synchro)))))))
 
 (defn preload-images!
   [images]
@@ -45,6 +54,7 @@
 
 (defn explain
   [problems]
+  (println problems)
   (str "Problems in config at : "
        (string/join ", " (map #(str (:in %)) (take 4 problems)))
        (when (> (count problems) 4) (str " (and " (- (count problems) 4) " more...)"))))
@@ -80,13 +90,14 @@
       (set! (.-onmessage channel) message-handler)
       (.postMessage channel (clj->js {:request true})))))
 
-(defn init-config! [config]
-  (when (not (conf/valid config))
-    (throw #js {:message (explain (conf/problems config))}))
-  (let [{:keys [config] :as state} (build-config! config)]
-    (preload-images! (conf/images config))
-    (set! (. js/document -title) (:title config))
-    (init-channel! state)))
+(defn init-config! [file]
+  (let [edn (read-config (:content file))]
+    (when (not (conf/valid edn))
+      (throw (js/Error. (explain (conf/problems edn)))))
+    (let [{:keys [config] :as state} (build-config! (assoc file :edn edn))]
+      (preload-images! (conf/images config))
+      (set! (. js/document -title) (:title config))
+      (init-channel! state))))
 
 (defn fetch-error [res]
   (js/Error. (str "Unable to load config.edn (" (.-status res)
@@ -96,25 +107,39 @@
                      (assoc state :phase :error
                                   :error err))))
 
-(defn set-config-error! [err]
+(defn set-config-error!
+  [err]
   (set! (. js/document -title) "Allalin - Error")
   (error! err))
 
-(defn load-conf! []
-  (swap! app-state assoc :phase :loading)
-  (set! (. js/document -title) "Allalin - Initialisation...")
-  (swap! app-state assoc :loading "Config loading...")
-  (-> (js/fetch "./config.edn")
+(defn set-config-loading!
+  []
+  (swap! app-state assoc :phase :loading
+    :loading "Config loading...")
+  (set! (. js/document -title) "Allalin - Loading..."))
+
+(defn load-conf!
+  []
+  (set-config-loading!)
+  (-> (js/fetch (str "./" default-filename))
       (.then (fn [r]
                (if (.-ok r)
                  r
                  (throw (fetch-error r)))))
       (.then (fn [r] (.text r)))
-      (.then #(do
-                (init-config! (read-config %))))
+      (.then #(init-config! {:content %
+                             :filename default-filename}))
       (.catch (fn [err] (set-config-error! err)))))
 
-; basic commands
+; curtain
+(defn toggle-hide! []
+  (swap! app-state update :hidden not))
+
+; help
+(defn toggle-help! []
+  (swap! app-state update :help not))
+
+; slide commands
 (defn to-basic! []
   (swap! app-state assoc :mode :basic))
 
@@ -138,14 +163,6 @@
   (if (= mode (:mode state))
     (assoc state :mode :basic)
     (assoc state :mode mode)))
-
-; curtain
-(defn toggle-hide! []
-  (swap! app-state update :hidden not))
-
-; help
-(defn toggle-help! []
-  (swap! app-state update :help not))
 
 ; print commands
 (defn toggle-print! []
@@ -190,3 +207,71 @@
 (defn reset-timer! []
   (swap! timer-state assoc :seconds 0)
   (update-timer!))
+
+;load and save commands
+(def upload-chan (chan 1))
+
+(def read-chan (chan 1))
+
+(defn throw-err [e]
+  (when (instance? js/Error e) (throw e))
+  e)
+
+(go-loop []
+  (let [reader (js/FileReader.)
+        file (<! upload-chan)]
+    (try
+      (set! (.-onload reader)
+            (fn [c]
+              (let [content (-> c .-target .-result js->clj)
+                    title (.-name file)]
+                (put! read-chan {:content content
+                                 :filename title}))))
+      (.readAsText reader file)
+      (catch :default e
+        (put! read-chan e)))
+    (recur)))
+
+(go-loop []
+  (try
+    (-> (throw-err (<! read-chan))
+        (init-config!))
+    (catch :default e
+      (set-config-error! e)))
+  (recur))
+
+(defn load-file!
+  [event]
+  (let [target (.-currentTarget event)
+        file (-> target .-files (aget 0))]
+    (set! (.-value target) "")
+    (set-config-loading!)
+    (put! upload-chan file)))
+
+(def storage-separator "/")
+
+(defn save-storage! []
+  (let [{:keys [config-str filename]} @app-state
+        item (str filename storage-separator config-str)]
+    (when (and (some? js/localStorage) (some? config-str) (some? filename))
+      (js/localStorage.setItem "last" item))))
+
+(def retrieve-chan (chan 1))
+
+(go-loop []
+  (try
+    (let [item (<! retrieve-chan)
+          index-sep (string/index-of item storage-separator)
+          filename (subs item 0 index-sep)
+          content (subs item (inc index-sep))]
+      (init-config! {:filename filename
+                     :content content}))
+    (catch :default e
+      (set-config-error! e)))
+  (recur))
+
+(defn retrieve-storage! []
+  (when (some? js/localStorage)
+    (set-config-loading!)
+    (when-let [item (js/localStorage.getItem "last")]
+      (put! retrieve-chan item))))

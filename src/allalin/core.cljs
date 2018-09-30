@@ -20,6 +20,12 @@
       (fs/exitFullScreen)
       (fs/requestFullScreen (get-app-element)))))
 
+(defn load-file! []
+  (.click (gdom/getElement "load-file")))
+
+(defn save-file! []
+  (.click (gdom/getElement "save-file")))
+
 (defn curtain-tip
   []
   (s/tip ["C"] "toggle the curtain"))
@@ -28,25 +34,40 @@
   []
   (s/tip ["H"] "toggle help"))
 
+(defn load-tip
+  []
+  (s/tip [["Ctrl" "O"]] "load another .edn presentation"))
+
+
 (def always-actions [[state/toggle-help!  {:keys ["h" "H"]
                                            :tip (help-tip)}]])
 
+(def load-actions [[load-file! {:keys [[:ctrl "o"] [:ctrl "O"]]
+                                :tip (load-tip)
+                                :disable-key :disable-edit}]
+                   [state/retrieve-storage! {:keys [[:ctrl "r"] [:ctrl "R"]]
+                                             :tip (s/tip [["Ctrl" "R"]] "restore last saved")
+                                             :disable-key :disable-edit}]])
+
 (def slides-actions [[state/go-start! {:keys ["Home"]
-                                       :tip (s/tip ["↖"] " to go to the first slide")}]
+                                       :tip (s/tip ["Home"] "go to the first slide")}]
                      [state/go-next! {:keys ["Enter" "PageDown" "ArrowRight" "ArrowDown"]
-                                      :tip (s/tip ["↵" "→" "↓"] "go to the next slide")}]
+                                      :tip (s/tip ["Enter" "→" "↓"] "go to the next slide")}]
                      [state/go-previous! {:keys ["PageUp" "ArrowLeft" "ArrowUp"]
                                           :tip (s/tip ["→" "↑"] "go back to the previous slide")}]
                      [state/go-end! {:keys ["End"]
-                                     :tip (s/tip ["↘"] "go to the last slide")}]])
+                                     :tip (s/tip ["End"] "go to the last slide")}]])
 
-(def loaded-actions [[state/toggle-hide!  {:keys ["c" "C"]
-                                           :tip (curtain-tip)}]
-                     [state/load-conf!    {:keys ["r" "R"]
-                                           :tip (s/tip ["R"] "reload")
-                                           :disable-key :disable-reload}]
-                     [toggle-fullscreen   {:keys ["f" "F"]
-                                           :tip (s/tip ["F"] "toggle fullscreen")}]])
+(def loaded-actions [[state/toggle-hide! {:keys ["c" "C"]
+                                          :tip (curtain-tip)}]
+                     [toggle-fullscreen {:keys ["f" "F"]
+                                         :tip (s/tip ["F"] "toggle fullscreen")}]
+                     [save-file! {:keys [[:ctrl "i"] [:ctrl "I"]]
+                                  :tip (s/tip [["Ctrl" "E"]] "download presentation")
+                                  :disable-key :disable-edit}]
+                     [state/save-storage! {:keys [[:ctrl "s"] [:ctrl "S"]]
+                                           :tip (s/tip [["Ctrl" "S"]] "save presentation")
+                                           :disable-key :disable-edit}]])
 
 (def modes-actions [[state/toggle-print! {:keys ["p" "P"]
                                           :tip (s/tip ["P"] "toggle print display")
@@ -70,16 +91,16 @@
           action-keys))
 
 (def keymaps
-  (let [[always slides loaded modes non-basic]
+  (let [[always load slides loaded modes non-basic]
         (mapv to-key-map
-              [always-actions slides-actions loaded-actions
+              [always-actions load-actions slides-actions loaded-actions
                modes-actions non-basic-actions])]
-    {:curtain (merge always loaded)
+    {:curtain (merge always load loaded)
      :loading always
-     :error always
-     :loaded {:basic (merge always loaded modes slides)
-              :print  (merge always loaded modes non-basic (to-key-map print/action-keys))
-              :notes  (merge always loaded modes non-basic slides (to-key-map notes/action-keys))}}))
+     :error (merge always load)
+     :loaded {:basic (merge always load loaded modes slides)
+              :print  (merge always load loaded modes non-basic (to-key-map print/action-keys))
+              :notes  (merge always load loaded modes non-basic slides (to-key-map notes/action-keys))}}))
 
 (defn available-actions [state]
   (let [{:keys [phase mode]} state
@@ -127,11 +148,11 @@
            (str index)))
        (mapcat to-help-list
                [always-actions
+                load-actions
                 loaded-actions
                 slides-actions
                 non-basic-actions
                 modes-actions]))]))
-
 
 (rum/defc curtain
   [on]
@@ -139,18 +160,19 @@
    (curtain-tip)])
 
 (rum/defc loading- < rum/static
-  [state]
-  (let [{:keys [loading phase]} state]
-    [:div.pane.loading (when (= :loading phase) {:class "on"})
-     (help-tip)
-     [:div.pane-state (or loading "")]]))
+  [loading phase]
+  [:div.pane.loading (when (= :loading phase) {:class "on"})
+   (help-tip)
+   [:div.pane-state (or loading "")]])
 
 (rum/defc err < rum/static
-  [error]
+  [error disable-edit]
   (js/console.log error)
-  [:div.pane.loading
+  [:div.pane.error
    [:div.pane-title "Error"]
-   [:div.pane-state (.-message error)]])
+   [:div.pane-state (.-message error)]
+   (when (not disable-edit)
+     (load-tip))])
 
 (rum/defc loaded < rum/static
   [state]
@@ -160,14 +182,32 @@
       :notes (notes/notes config position notes)
       (basic/basic config position))))
 
+(rum/defc not-displayed < rum/static
+  [filename config-str disable-edit]
+  [:div.none
+   [:input#load-file {:type "file"
+                      :accept ".edn"
+                      :on-change state/load-file!}]
+   (when (and (some? config-str) (not disable-edit))
+     [:a#save-file {:download filename
+                    :href (str "data:text/plain;charset=utf-8,"
+                               (js/encodeURIComponent config-str))}])])
+
 (defn key-handler
   [event]
   (let [state @state/app-state
-        action (get-action state (.-key event))
+        key (if (.-ctrlKey event)
+              [:ctrl (.-key event)]
+              (.-key event))
+        action (get-action state key)
         disabled (get-in state [:config (:disable-key action)])
         f (:fn action)]
-    (when (and f (not disabled))
-      (f))))
+    (when (some? f)
+      (when (not disabled)
+        (f))
+      (.preventDefault event)
+      (.stopPropagation event))
+    false))
 
 (def key-listener-mixin
   (letfn [(mount [state]
@@ -175,27 +215,30 @@
                                "keydown"
                                key-handler
                                false)
+
             (assoc state ::key-handler key-handler))
           (unmount [state]
             (.removeEventListener js/document
                                   "keydown"
                                   (::key-handler state)
-                                  false))]
+                                  false)
+            (dissoc state ::key-handler))]
     {:did-mount mount
      :will-unmount unmount}))
 
 (rum/defc app < rum/reactive key-listener-mixin
   []
-  (let [{:keys [error phase] :as state} (rum/react state/app-state)]
+  (let [{:keys [config phase loading error
+                filename disable-edit] :as state}(rum/react state/app-state)]
     [:div.relative
      (curtain (:hidden state))
-     (loading- state)
+     (loading- loading phase)
      (help- state)
      (case phase
-       :error (err error)
+       :error (err error disable-edit)
        :loaded (loaded state)
-       nil)]))
-
+       nil)
+     (not-displayed filename config disable-edit)]))
 
 (defn mount [el]
   (rum/mount (app) el))
