@@ -169,18 +169,22 @@ header, footer, aside {
     vertical-align: middle;
     border: solid #5f97b1 1px;
     border-radius: 0.8vmin;
-    padding: 0.5vmin 1vmin 0 1vmin;
-    margin: 0 0.5vmin;
+    padding: 0.5vmin;
+    margin: 0 1vmin;
     font-size: 120%;
     box-sizing: border-box;
-    min-width: 2.5em;
-    height: 2.5em;
+    min-width: 2.4em;
+    height: 2.4em;
 }
 
 .pane .key.small {
-    font-size: 80%;
+    font-size: 90%;
+    min-width: 3.2em;
+    height: 3.2em;
+}
+
+.pane .key.modifier {
     min-width: 4em;
-    height: 4em;
 }
 
 .pane .disabled .key {
@@ -193,7 +197,7 @@ header, footer, aside {
     visibility: hidden;
     transition: opacity 0.5s ease-out, visibility 0.5s;
     transition: opacity 0.5s ease-out, visibility 0.5s;
-    background: rgba(17, 17, 17, 0.93);
+    background: rgba(17, 17, 17, 0.98);
     font-size: 3.5vmin;
     justify-content: flex-start;
     align-items: flex-start;
@@ -262,6 +266,7 @@ header, footer, aside {
 
 .print {
     overflow: hidden;
+    background: #fff;
 }
 
 .print .page {

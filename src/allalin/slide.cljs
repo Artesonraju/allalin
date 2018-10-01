@@ -9,15 +9,18 @@
 (defn or-config [page config keys]
   (or (get-in page keys) (get-in config keys)))
 
-(defn key- [k]
-  [:span.key {:key k
-              :class (when (> (count k) 1) "small")}
-   k])
+(defn key-
+  ([k] (key- k false))
+  ([k modifier?]
+   [:span.key {:key k
+               :class [(when modifier? "modifier")
+                       (when (> (count k) 1) "small")]}
+    k]))
 
 (defn combination [c]
   (if (vector? c)
-    (->> c
-         (map key-)
+    (->> (conj (map key- (rest c))
+               (key- (first c) true))
          (interpose "+"))
     (key- c)))
 
