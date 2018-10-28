@@ -7,7 +7,8 @@
    [allalin.slide :as s]
    [allalin.mode.basic :as basic]
    [allalin.mode.print :as print]
-   [allalin.mode.notes :as notes]))
+   [allalin.mode.notes :as notes]
+   [allalin.mode.editor :as editor]))
 
 (defn get-app-element []
   (gdom/getElement "app"))
@@ -61,13 +62,14 @@
 (def loaded-actions [[state/toggle-hide! {:keys ["c" "C"]
                                           :tip (curtain-tip)}]
                      [toggle-fullscreen {:keys ["f" "F"]
-                                         :tip (s/tip ["F"] "toggle fullscreen")}]
-                     [save-file! {:keys [[:ctrl "i"] [:ctrl "I"]]
-                                  :tip (s/tip [["Ctrl" "E"]] "download presentation")
-                                  :disable-key :disable-edit}]
-                     [state/save-storage! {:keys [[:ctrl "s"] [:ctrl "S"]]
-                                           :tip (s/tip [["Ctrl" "S"]] "save presentation")
-                                           :disable-key :disable-edit}]])
+                                         :tip (s/tip ["F"] "toggle fullscreen")}]])
+
+(def editloaded-action [[save-file! {:keys [[:ctrl "i"] [:ctrl "I"]]
+                                     :tip (s/tip [["Ctrl" "E"]] "download presentation")
+                                     :disable-key :disable-edit}]
+                        [state/save-storage! {:keys [[:ctrl "s"] [:ctrl "S"]]
+                                              :tip (s/tip [["Ctrl" "S"]] "save presentation in the browser")
+                                              :disable-key :disable-edit}]])
 
 (def modes-actions [[state/toggle-print! {:keys ["p" "P"]
                                           :tip (s/tip ["P"] "toggle print display")
@@ -76,7 +78,11 @@
                     [state/toggle-notes! {:keys ["n" "N"]
                                           :tip (s/tip ["N"] "toggle notes display")
                                           :disable-key :disable-notes
-                                          :sub-actions notes/action-keys}]])
+                                          :sub-actions notes/action-keys}]
+                    [state/toggle-editor! {:keys ["e" "E"]
+                                           :tip (s/tip ["E"] "toggle editor display")
+                                           :disable-key :disable-editor
+                                           :sub-actions editor/action-keys}]])
 
 (def non-basic-actions [[state/to-basic!  {:keys ["s" "S"]
                                            :tip (s/tip ["S"] "go back to slide display")}]])
@@ -91,16 +97,20 @@
           action-keys))
 
 (def keymaps
-  (let [[always load slides loaded modes non-basic]
+  (let [[always load slides loaded editloaded modes non-basic]
         (mapv to-key-map
               [always-actions load-actions slides-actions loaded-actions
-               modes-actions non-basic-actions])]
-    {:curtain (merge always load loaded)
+               editloaded-action modes-actions non-basic-actions])
+        all-loaded (merge always load loaded editloaded modes)]
+    {:curtain (merge always load loaded editloaded)
      :loading always
      :error (merge always load)
-     :loaded {:basic (merge always load loaded modes slides)
-              :print  (merge always load loaded modes non-basic (to-key-map print/action-keys))
-              :notes  (merge always load loaded modes non-basic slides (to-key-map notes/action-keys))}}))
+     :loaded {:basic (merge all-loaded slides)
+              :print  (merge all-loaded non-basic (to-key-map print/action-keys))
+              :notes  (merge all-loaded non-basic slides
+                             (to-key-map notes/action-keys))
+              :editor (merge all-loaded non-basic
+                             (to-key-map editor/action-keys))}}))
 
 (defn available-actions [state]
   (let [{:keys [phase mode]} state
@@ -148,11 +158,12 @@
            (str index)))
        (mapcat to-help-list
                [always-actions
-                load-actions
                 loaded-actions
                 slides-actions
                 non-basic-actions
-                modes-actions]))]))
+                modes-actions
+                load-actions
+                editloaded-action]))]))
 
 (rum/defc curtain
   [on]
@@ -176,10 +187,11 @@
 
 (rum/defc loaded < rum/static
   [state]
-  (let [{:keys [config mode position print notes]} state]
+  (let [{:keys [config mode position print notes editor]} state]
     (case mode
       :print (print/print- config position print)
       :notes (notes/notes config position notes)
+      :editor (editor/editor config position editor)
       (basic/basic config position))))
 
 (rum/defc not-displayed < rum/static

@@ -19,4 +19,3 @@
                    :resource-paths ["target"]
                    ;; need to add the compliled assets to the :clean-targets
                    :clean-targets ^{:protect false} ["target"]}})
-

@@ -9,7 +9,7 @@
 
 (def action-keys [[(partial state/next-layout! layouts)
                    {:keys ["m" "M"]
-                    :tip (s/tip ["M"] "switch note display mode")}]
+                    :tip (s/tip ["M"] "switch notes display mode")}]
                   [state/reset-timer!
                    {:keys ["t" "T"]
                     :tip (s/tip ["T"] "reset timer")}]])

@@ -251,10 +251,15 @@
 (def storage-separator "/")
 
 (defn save-storage! []
-  (let [{:keys [config-str filename]} @app-state
-        item (str filename storage-separator config-str)]
-    (when (and (some? js/localStorage) (some? config-str) (some? filename))
-      (js/localStorage.setItem "last" item))))
+  (swap! app-state
+    (fn [state]
+      (let [{:keys [config-str filename]} state
+            item (str filename storage-separator config-str)]
+        (when (and (some? js/localStorage) (some? config-str) (some? filename))
+          (js/localStorage.setItem "last" item)
+          (assoc state :editor {:filename filename
+                                :time (js/Date.)}))))))
+
 
 (def retrieve-chan (chan 1))
 
@@ -275,3 +280,7 @@
     (set-config-loading!)
     (when-let [item (js/localStorage.getItem "last")]
       (put! retrieve-chan item))))
+
+; editor actions
+(defn toggle-editor! []
+  (swap! app-state toggle-mode :editor))
