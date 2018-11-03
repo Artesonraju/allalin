@@ -15,14 +15,24 @@
                           :config-hash nil
                           :config-str nil
                           :position nil
+                          :history {:config ()
+                                    :position ()}
+                          :future {:config ()
+                                   :position ()}
                           :channel nil
                           :filename nil
                           :mode nil}))
 
+(defn derive-config
+  ([state] (derive-config state (str (:config state))))
+  ([state str-conf]
+   (assoc state :config-str str-conf
+                :config-hash (hash (:config state)))))
+
 (defn synchro
   [state]
   (let [{:keys [config config-hash channel]} state
-        h (hash config)]
+        h (:config-hash config)]
     (if (or (not (:synchro config)) (= h config-hash) (not js/BroadcastChannel))
       (assoc state :channel nil)
       (do
@@ -32,18 +42,19 @@
 
 (defn build-config!
   [file]
-  (let [{:keys [edn content filename]} file]
+  (let [{:keys [edn content filename]} file
+        str-conf (or content (str edn))]
     (swap! app-state
       (fn [state]
         (let [{:keys [position mode]} state]
           (-> state
               (dissoc :error)
               (assoc :config edn
-                     :config-str (or content (str edn))
                      :mode (conf/mode mode)
                      :phase :loaded
                      :filename filename
                      :position (position/init-position edn position))
+              (derive-config str-conf)
               (synchro)))))))
 
 (defn preload-images!
@@ -284,3 +295,84 @@
 ; editor actions
 (defn toggle-editor! []
   (swap! app-state toggle-mode :editor))
+
+(defn insert-vec [vect index elt]
+  (vec (concat (take index vect) [elt] (drop index vect))))
+
+(defn clone-vec [vect index]
+  (let [elt (nth vect index)]
+    (insert-vec vect index elt)))
+
+(defn delete-vec [vect index]
+  (vec (concat (take index vect) (drop (inc index) vect))))
+
+(defn push-save!
+  [change-fn]
+  (swap! app-state
+    (fn [state]
+      (-> (change-fn state)
+          (update-in [:history :config] conj (:config state))
+          (update-in [:history :position] conj (:position state))
+          (assoc :future {:position () :config ()})
+          (derive-config)
+          (synchro)))))
+
+(defn next-change!
+  []
+  (swap! app-state
+    (fn [state]
+      (let [config (-> state :future :config first)
+            position (-> state :future :position first)]
+        (if (and (some? config) (some? position))
+          (-> state
+              (update-in [:history :config] conj (:config state))
+              (update-in [:history :position] conj (:position state))
+              (assoc :config config :position position)
+              (update-in [:future :config] rest)
+              (update-in [:future :position] rest)
+              (derive-config)
+              (synchro))
+          state)))))
+
+(defn previous-change!
+  []
+  (swap! app-state
+    (fn [state]
+      (let [config (-> state :history :config first)
+            position (-> state :history :position first)]
+        (if (and (some? config) (some? position))
+          (-> state
+              (update-in [:future :config] conj (:config state))
+              (update-in [:future :position] conj (:position state))
+              (assoc :config config :position position)
+              (update-in [:history :config] rest)
+              (update-in [:history :position] rest)
+              (derive-config)
+              (synchro))
+          state)))))
+
+
+(defn insert-page-at! [index]
+  (push-save!
+    (fn [state]
+      (-> state
+        (update-in [:config :pages] #(insert-vec % index {}))
+        (update-in [:position :parts] #(insert-vec % index {:moves 0}))
+        (update :position (partial position/nth-position index))))))
+
+(defn clone-page-at! [index]
+  (push-save!
+    (fn [state]
+      (-> state
+          (update-in [:config :pages] #(clone-vec % index))
+          (update-in [:position :parts] #(clone-vec % index))
+          (update :position (partial position/nth-position index))))))
+
+(defn delete-page-at! [index]
+  (push-save!
+    (fn [state]
+      (-> state
+          (update-in [:config :pages] #(delete-vec % index))
+          (update-in [:position :parts] #(delete-vec % index))
+          (update :position (partial position/nth-position
+                                     (min index (count (-> state :config :pages)))))))))

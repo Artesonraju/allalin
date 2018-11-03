@@ -45,10 +45,15 @@ table {
 	border-collapse: collapse;
 	border-spacing: 0;
 }
-
 a {
     color: inherit;
 }
+button {
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
 
 /* css reset end */
 
@@ -154,7 +159,6 @@ header, footer, aside {
 
 .disabled .pane-tip {
     color: #666;
-    font-weight: 400;
 }
 
 .pane-title {
@@ -240,11 +244,17 @@ header, footer, aside {
     transition: all 700ms cubic-bezier(.25,.46,.45,.94);
 }
 
+@media print {
+    .curtain, .help {
+        display: none;
+    }
+}
+
 .loading {
     z-index: 4;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.5s ease-out 1s, visibility 1.5s;
+    transition: opacity 0.5s ease-out 0.5s, visibility 1s;
 }
 
 .loading.on{
@@ -521,10 +531,18 @@ main {
     flex-direction: column;
 }
 
+.editor .thumbnails > div {
+    padding: 10px 0;
+}
+
 .editor .thumbnail {
     position: relative;
-    padding: 4px;
+    padding: 10px 4px;
     cursor: pointer;
+}
+
+.editor .thumbnail-content {
+    position: relative;
     overflow: hidden;
 }
 
@@ -532,7 +550,7 @@ main {
     pointer-events: none;
 }
 
-.editor .thumbnail::after {
+.editor .thumbnail-content::after {
     content: '';
     position: absolute;
     bottom:-54%;
@@ -544,18 +562,34 @@ main {
     transform: rotate(-45deg);
 }
 
-.editor .current.thumbnail {
-    background: #00334d;
+.editor .thumbnail:hover {
+    background: #999;
 }
 
-.editor .current.thumbnail::after {
+.editor .thumbnail:hover .thumbnail-content::after {
     content: '';
     position: absolute;
     bottom:-54%;
     right:-54%;
     width: 100%;
     height: 100%;
-    background: rgb(0, 51, 77);
+    background: #999;
+    transform-origin: center;
+    transform: rotate(-45deg);
+}
+
+.editor .current.thumbnail {
+    background: #222;
+}
+
+.editor .thumbnail.current .thumbnail-content::after {
+    content: '';
+    position: absolute;
+    bottom:-54%;
+    right:-54%;
+    width: 100%;
+    height: 100%;
+    background: #222;
     transform-origin: center;
     transform: rotate(-45deg);
 }
@@ -576,6 +610,54 @@ main {
 
 .editor .current .thumbnail-count {
     color: #ddd;
+}
+
+.editor .thumbnail button {
+    background: transparent;
+    opacity: 0.6;
+    cursor: pointer;
+    display: none;
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    z-index: 3;
+    line-height: 100%;
+    font-weight: 700;
+    font-size: 24px;
+}
+
+.editor .thumbnail:hover button {
+    display: block;
+
+}
+
+.editor .thumbnail button:hover {
+    opacity: 1;
+}
+
+.thumbnail .before {
+    left: 0;
+    top: -13px;
+    color: #0c7501;
+}
+
+.thumbnail .after {
+    left: 0;
+    bottom: -12px;
+    color: #0c7501;
+}
+
+
+.thumbnail .clone {
+    color: #0c7501;
+    left: 0;
+    top: calc(50% - 12px);
+}
+
+.thumbnail .delete {
+    color: #d40303;
+    right: 3px;
+    top: 0px;
 }
 
 header {

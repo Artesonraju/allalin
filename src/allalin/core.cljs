@@ -64,7 +64,7 @@
                      [toggle-fullscreen {:keys ["f" "F"]
                                          :tip (s/tip ["F"] "toggle fullscreen")}]])
 
-(def editloaded-action [[save-file! {:keys [[:ctrl "i"] [:ctrl "I"]]
+(def editloaded-action [[save-file! {:keys [[:ctrl "e"] [:ctrl "E"]]
                                      :tip (s/tip [["Ctrl" "E"]] "download presentation")
                                      :disable-key :disable-edit}]
                         [state/save-storage! {:keys [[:ctrl "s"] [:ctrl "S"]]
